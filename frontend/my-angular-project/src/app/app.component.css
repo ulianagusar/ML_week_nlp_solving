@@ -1,0 +1,232 @@
+/* Загальні стилі сторінки */
+
+.main {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #f5f8fa;
+    font-family: Arial, sans-serif;
+    background-image: url('img.jpg');
+}
+
+.btn-search {
+    background-color: green;
+    color: white;
+    font-size: 18px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.btn-search:hover {
+    background-color: darkgreen;
+}
+
+
+/* Контейнер для дропдауна та поля дати */
+
+.dropdown-date-container {
+    display: flex;
+    justify-content: flex-start;
+    align-items: top;
+    gap: 10px;
+    /* Відстань між елементами */
+    position: sticky;
+    top: 0 px;
+    /* Можна встановити відстань від верхнього краю */
+    background-color: #fff;
+    /* Фон, щоб не просвічувалося через контейнер */
+    z-index: 10;
+    /* Забезпечує, що елементи будуть поверх інших */
+    padding: 10px 0;
+    margin-top: 1px;
+    /* Відступ для коректного відображення */
+}
+
+
+/* Стилі для дати */
+
+.date {
+    font-size: 0.8em;
+    color: #888;
+}
+
+.date-picker {
+    flex-direction: column;
+    border-radius: 4px;
+    border-color: black;
+}
+
+.date-picker input[type="date"] {
+    padding: 10px;
+    font-size: 16px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    width: 200px;
+}
+
+.date-picker label {
+    font-size: 14px;
+}
+
+
+/* Контейнер для повідомлень */
+
+.centered-container {
+    display: flex;
+    justify-content: top;
+    align-items: flex-start;
+    flex-direction: column;
+    background: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+    margin-left: 100px;
+    padding: 20px;
+    height: 550px;
+    width: 1000px;
+}
+
+
+/* Контейнер для повідомлень */
+
+.messages {
+    max-height: 400px;
+    /* Встановіть висоту, щоб обмежити простір */
+    overflow-y: auto;
+    /* Додає вертикальний скрол, якщо контент перевищує висоту */
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    background-color: #f9f9f9;
+    margin-bottom: 15px;
+    scrollbar-width: thin;
+    /* Вузька смужка скролу (для браузерів, що підтримують) */
+    scrollbar-color: #0078d4 #f9f9f9;
+    /* Колір скролу (для браузерів, що підтримують) */
+    position: relative;
+    /* Додано для коректного позиціонування */
+}
+
+.channel-dropdown {
+    padding: 10px;
+    font-size: 16px;
+    width: 200px;
+    border-radius: 4px;
+}
+
+.message {
+    margin-bottom: 10px;
+}
+
+.message-content {
+    padding: 10px;
+    background-color: #f1f1f1;
+    border-radius: 5px;
+}
+
+.messages::-webkit-scrollbar {
+    width: 8px;
+}
+
+.messages::-webkit-scrollbar-thumb {
+    background-color: #0078d4;
+    border-radius: 5px;
+}
+
+.messages::-webkit-scrollbar-track {
+    background: #f9f9f9;
+}
+
+.message {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px;
+    margin-bottom: 10px;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.avatar {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 50px;
+    height: 50px;
+    background-color: #0078d4;
+    color: #fff;
+    font-size: 20px;
+    font-weight: bold;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+
+/* Контент повідомлення */
+
+.message-content {
+    flex-grow: 1;
+}
+
+.channel {
+    font-size: 16px;
+    color: #0078d4;
+}
+
+.text {
+    margin: 5px 0;
+    font-size: 14px;
+    color: #333;
+}
+
+.date {
+    font-size: 12px;
+    color: #999;
+}
+
+
+/* Дропдаун меню */
+
+.dropdown {
+    display: inline-block;
+}
+
+.dropbtn {
+    background-color: #4caf50;
+    color: white;
+    padding: 10px 15px;
+    font-size: 14px;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: #f1f1f1;
+    min-width: 150px;
+    box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
+    z-index: 1;
+    border-radius: 5px;
+    padding: 5px 0;
+}
+
+.dropdown-content p {
+    color: black;
+    padding: 10px 15px;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.dropdown-content p:hover {
+    background-color: #ddd;
+}
+
+.dropdown:hover .dropdown-content {
+    display: block;
+}

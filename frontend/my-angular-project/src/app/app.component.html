@@ -1,0 +1,49 @@
+<main class="main">
+    <div class="centered-container">
+        <!-- Контейнер для дропдауна та поля дати -->
+        <div class="dropdown-date-container">
+            <!-- Дропдаун для вибору каналу -->
+            <div class="dropdown">
+                <select (change)="onChannelChange($event)" class="channel-dropdown">
+                  <option value="all">Усі канали</option>
+                  <option *ngFor="let channel of channels" [value]="channel">{{ channel }}</option>
+              </select>
+            </div>
+
+            <div class="dropdown">
+                <select (change)="onModelsChange($event)" class="channel-dropdown">
+                  <option value="all">Модель</option>
+                  <option *ngFor="let model of models" [value]="model">{{ model }}</option>
+              </select>
+            </div>
+
+            <!-- Поля для вибору діапазону дат -->
+            <div class="date-picker">
+                <input type="date" id="start-date" (change)="onStartDateChange($event)">
+            </div>
+            <div class="date-picker">
+                <input type="date" id="end-date" (change)="onEndDateChange($event)">
+            </div>
+
+            <!-- Кнопка пошуку -->
+            <div class="search-button">
+                <button class="btn-search" (click)="onSearch()">Search</button>
+            </div>
+        </div>
+
+        <!-- Велике вікно повідомлень -->
+        <div class="popup">
+            <div class="messages">
+                <!-- Перебір повідомлень -->
+                <div *ngFor="let post of filteredPosts" class="message">
+                    <div class="message-content">
+                        <p class="text">{{ post.Message }}</p>
+                        <!-- Додаємо поле з датою -->
+                        <p class="date">{{ post.MessageDate | date }}</p>
+                        <!-- Використовуємо пайп для формату дати -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
