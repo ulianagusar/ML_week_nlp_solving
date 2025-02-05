@@ -18,9 +18,9 @@ import os
 import torch
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
-import spacy
 from transformers import pipeline
 import torch
+from deeppavlov import build_model, configs
 
 os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
 
@@ -46,9 +46,8 @@ CORS(app)
 def model1(choice):
     class MilitaryAnalyzer:
         def __init__(self):
-            # Initialize spaCy
-            spacy.prefer_gpu()
-            self.nlp = spacy.load("ru_core_news_md")
+            # Initialize DeepPavlov NER model
+            self.ner_model = build_model(configs.ner.ner_rus_bert, download=True)
 
             # Initialize transformer model
             self.model_name = "bodomerka/Milytary_exp_class_classification_sber_ai_based"
@@ -119,13 +118,24 @@ def model1(choice):
                 return False
 
         def analyze_text(self, text):
-            """Analyze text with error handling"""
+            """Analyze text with DeepPavlov NER"""
             try:
-                doc = self.nlp(text)
+                ner_results = self.ner_model([text])
+                entities = list(zip(ner_results[0][0], ner_results[1][0]))
+                
+                names = set()
+                locations = set()
+                
+                for word, label in entities:
+                    if label == "B-PER" or label == "I-PER":
+                        names.add(word)
+                    elif label == "B-LOC" or label == "I-LOC":
+                        locations.add(word)
+                
                 return {
                     "military_experience": self.classify_text(text),
-                    "names": [ent.text for ent in doc.ents if ent.label_ == "PER"],
-                    "locations": [ent.text for ent in doc.ents if ent.label_ == "LOC"],
+                    "names": list(names),
+                    "locations": list(locations),
                     "mentioned_weapons": [w for w in self.weapons if w.lower() in text.lower()]
                 }
             except Exception as e:
