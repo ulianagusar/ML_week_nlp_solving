@@ -58,7 +58,9 @@ def get_db_connection():
     conn.row_factory = sqlite3.Row 
     return conn
 
-def save_final_mess(message_text, channel, date_time, name, location, weapon):
+
+
+def save_data(message_id, message_text, channel, date_time, name, location, weapon, observation, discussion, conclusion, recommendation):
 
     try:
         conn = get_db_connection()
@@ -66,43 +68,20 @@ def save_final_mess(message_text, channel, date_time, name, location, weapon):
 
         cursor.execute(
             """
-            INSERT INTO TelegramPostInfo (Message, Channel, MessageDate, Name, Location, Weapons)
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO TelegramPostInfo 
+            (MessageID, Message, Channel, MessageDate, Name, Location, Weapons, Observation, Discussion, Conclusion, Recommendation)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
-            (message_text, channel, date_time, name, location, weapon)
+            (message_id, message_text, channel, date_time, name, location, weapon, observation, discussion, conclusion, recommendation)
         )
-
-        message_id = cursor.lastrowid  
 
         conn.commit()
         conn.close()
 
-        print(f"✅ [{channel}] Збережено нове повідомлення з ID {message_id}.")
-        return message_id  
+        print(f"✅ [{channel}] Збережено повідомлення з ID {message_id}.")
     except Exception as e:
         print(f"❌ [{channel}] Помилка збереження в БД: {e}")
-        return None
 
-def save_odcr(message_id, observation, discussion, conclusion, recommendation):
-
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-
-        cursor.execute(
-            """
-            INSERT INTO ODCRAnalysis (MessageID, Observation, Discussion, Conclusion, Recommendation)
-            VALUES (?, ?, ?, ?, ?)
-            """,
-            (message_id, observation, discussion, conclusion, recommendation)
-        )
-
-        conn.commit()
-        conn.close()
-
-        print(f"✅ Збережено аналіз O-D-C-R для повідомлення ID {message_id}.")
-    except Exception as e:
-        print(f"❌ Помилка збереження O-D-C-R в БД: {e}")
 
 
 def delete_old_posts():
@@ -110,16 +89,15 @@ def delete_old_posts():
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute("DELETE FROM ODCRAnalysis")
+
         cursor.execute("DELETE FROM TelegramPostInfo")
 
         conn.commit()
         conn.close()
 
-        print(f"✅ Видалено всі записи з таблиць TelegramPostInfo та ODCRAnalysis.")
+        print("✅ Видалено всі записи з таблиці TelegramPostInfo.")
     except Exception as e:
-        print(f"❌ Помилка при видаленні старих записів: {e}")
-
+        print(f"❌ Помилка при видаленні записів: {e}")
 
 
 
@@ -188,10 +166,10 @@ def fetch_posts():
         print(ids_unique)
         for i in range(len(exp_only_mes)) :
             if exp_only_id[i] in ids_unique :
-                 mes_id = save_final_mess(exp_only_mes[i], exp_only_channels[i], exp_only_date[i] ,
-                        get_name(cleaned_messages[i]) ,get_location(cleaned_messages[i]) , get_weapons(cleaned_messages[i]) )  
-                 save_odcr(mes_id ,  get_o(cleaned_messages[i]) ,
-                        get_d(cleaned_messages[i]) , get_c(cleaned_messages[i]) , get_r(cleaned_messages[i]))
+                 
+                 save_data(exp_only_id[i], exp_only_mes[i], exp_only_channels[i], exp_only_date[i], get_name(cleaned_messages[i]), get_location(cleaned_messages[i]),
+                            get_weapons(cleaned_messages[i]) , get_o(cleaned_messages[i]), get_d(cleaned_messages[i]), get_c(cleaned_messages[i]), get_r(cleaned_messages[i]))
+
 
 
         return jsonify({"message": "Повідомлення успішно отримані та збережені"}), 200

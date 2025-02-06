@@ -203,7 +203,7 @@ def military_classification(choice):
 
 
 
-def experience_xg_bert(mes):
+def experience_bert(mes):
 
     return 1
 
