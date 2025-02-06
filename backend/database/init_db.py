@@ -1,12 +1,11 @@
-
 import sqlite3
 from pathlib import Path
 
-DB_PATH = Path(__file__).resolve().parent / "database" / "database.db"
+
 
 def init_db():
-    """Ініціалізація бази даних та створення таблиць"""
-    conn = sqlite3.connect(DB_PATH)
+
+    conn = sqlite3.connect("database.db")
     cursor = conn.cursor()
 
     # Таблиця для повідомлень
@@ -41,8 +40,9 @@ def init_db():
 
     conn.commit()
     conn.close()
-    print("✅ База даних успішно ініціалізована.")
+    print(f"✅ База даних створена (або вже існує) за шляхом:")
 
+# Запуск ініціалізації, якщо цей файл виконується напряму
 if __name__ == "__main__":
     init_db()
 

@@ -25,14 +25,14 @@ from transformers import pipeline
 import torch
 import pandas as pd
 import csv
-from ML_week_nlp_solving.backend.services.remove_dublicates import MessageManager , rm_dublicates
+from services.remove_dublicates import MessageManager , rm_dublicates
 import sqlite3
 import pandas as pd
 import csv
-from ML_week_nlp_solving.backend.services.preproc import preprocessing
-from ML_week_nlp_solving.backend.services.odsr import get_o , get_d , get_c , get_r
-from ML_week_nlp_solving.backend.services.ner import get_name , get_location , get_weapons 
-from ML_week_nlp_solving.backend.services.experience import military_classification
+from services.preproc import preprocessing
+from services.odsr import get_o , get_d , get_c , get_r
+from services.ner import get_name , get_location , get_weapons 
+from services.experience import military_classification_bert , military_classification_xg_boost
 from pathlib import Path
 
 os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
@@ -50,7 +50,7 @@ CORS(app)
 
 
 DB_PATH = Path(__file__).resolve().parent / "database" / "database.db"
-
+print(DB_PATH)
 def get_db_connection():
     """Підключення до бази даних"""
     conn = sqlite3.connect(DB_PATH)  
@@ -146,7 +146,7 @@ def fetch_posts():
     channel_name = data.get('channel')
     start_date_str = data.get('start_date')
     end_date_str = data.get('end_date')
-
+    model = data.get('model')
     try:
         start_date = datetime.strptime(start_date_str, "%Y-%m-%d")
         end_date = datetime.strptime(end_date_str, "%Y-%m-%d")
@@ -164,7 +164,11 @@ def fetch_posts():
 
         for i in range(len(messages)) :
                 cleaned_message = preprocessing(messages[i])
-                exp_class = military_classification(cleaned_message)
+                if model == "Bert":
+                     exp_class = military_classification_bert(cleaned_message)
+                else :
+                     exp_class = military_classification_xg_boost(cleaned_message)
+
                 if exp_class == 1:
                     exp_only_mes.append(messages[i])
                     exp_only_date.append(dates[i])
@@ -198,7 +202,7 @@ def get_posts():
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        query = "SELECT * FROM TelegramPostInfo2"
+        query = "SELECT * FROM TelegramPostInfo"
         cursor.execute(query)
         rows = cursor.fetchall()
 

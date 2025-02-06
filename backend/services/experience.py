@@ -189,10 +189,7 @@ def military_classification(choice):
 
             except Exception as e:
                 print(f"Error processing CSV: {e}")
-              
-#ВСТАВИТИ ОПЕН АРІ КЛЮЧ
-#ВСТАВИТИ ОПЕН АРІ КЛЮЧ
- #  openai.api_key =
+
 
     analyzer = MilitaryAnalyzer()
     if len(sys.argv) > 1:
@@ -203,3 +200,13 @@ def military_classification(choice):
         input_csv = "telegram_posts.csv"
         output_csv = "output_odcr_reports.csv"
         analyzer.process_csv(input_csv, output_csv)
+
+
+
+def military_classification_bert(mes):
+
+    return 1
+
+def military_classification_xg_boost(mes):
+
+    return 1
