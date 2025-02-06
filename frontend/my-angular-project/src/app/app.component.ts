@@ -66,11 +66,11 @@ export class AppComponent implements OnInit {
     };
     console.log(requestBody)
     // Надсилаємо POST запит для отримання повідомлень
-    this.http.post('http://127.0.0.1:5000/api/fetch_posts', requestBody)
+    this.http.post('http://127.0.0.1:5001/api/fetch_posts', requestBody)
       .subscribe({
         next: () => {
           // Після успішного виконання POST запиту виконуємо GET запит для отримання повідомлень
-          this.http.get<any[]>('http://127.0.0.1:5000/api/posts')
+          this.http.get<any[]>('http://127.0.0.1:5001/api/posts')
             .subscribe(data => {
               console.log(data);
               this.posts = data;

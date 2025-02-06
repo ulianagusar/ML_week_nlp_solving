@@ -8,13 +8,6 @@ from sentence_transformers import SentenceTransformer
 from datetime import datetime, timedelta
 
 
-
-
-
-
-
-app = Flask(__name__)
-
 class MessageManager:
     def __init__(self, model_name='paraphrase-multilingual-MiniLM-L12-v2', index_path='faiss.index', data_path='data.pkl'):
         self.model = SentenceTransformer(model_name)
@@ -72,10 +65,10 @@ class MessageManager:
         self.save_data()
 
 
-manager = MessageManager()
 
 
-def rm_dublicates(df_current ,day_range = 1):
+
+def rm_dublicates(manager , df_current ,day_range = 1):
 
      test_messages = df_current['Message'].to_list()
      test_times = df_current['MessageDate'].to_list()
@@ -125,55 +118,3 @@ def rm_dublicates(df_current ,day_range = 1):
                else:
                     print("similar record in the specified time range - don't write")
      return res_ids
-
-
-@app.route('/remove_duplicates', methods=['POST'])
-def remove_duplicates_api():
-    try:
-
-        # print(manager.messages)
-        # print(manager.timestamps)
-        manager.messages
-        json_data = request.get_json()
-
-        if not json_data:
-            return jsonify({'error': 'No JSON data received'}), 400
-
-
-        df_current = pd.DataFrame(json_data)
-
-
-        required_columns = {'Message', 'MessageDate', 'TelegramPostInfoID'}
-        if not required_columns.issubset(df_current.columns):
-            return jsonify({'error': f'Missing required columns: {required_columns - set(df_current.columns)}'}), 400
-
-      
-        day_range = request.args.get('day_range', default=1, type=int)
-
-
-        unique_ids = rm_dublicates(df_current, day_range)
-        print(manager.messages)
-        print(manager.timestamps)
-        return jsonify({'unique_ids': unique_ids})
-
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-
-@app.route('/clear_db', methods=['POST'])
-def clear_db():
-    manager.messages = []
-    manager.timestamps = []
-    manager.embeddings = np.empty((0, manager.dimension), dtype='float32')
-    manager.index = faiss.IndexFlatL2(manager.dimension)  
-    manager.save_data()
-
-    return {'status': 'success', 'message': 'Database cleared successfully'}
-
-
-
-
-if __name__ == '__main__':
-    app.run(debug=True)
-
-
