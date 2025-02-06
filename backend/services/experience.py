@@ -203,10 +203,10 @@ def military_classification(choice):
 
 
 
-def military_classification_bert(mes):
+def experience_xg_bert(mes):
 
     return 1
 
-def military_classification_xg_boost(mes):
+def experience_xg_boost(mes):
 
     return 1

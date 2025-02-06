@@ -32,7 +32,7 @@ import csv
 from services.preproc import preprocessing
 from services.odsr import get_o , get_d , get_c , get_r
 from services.ner import get_name , get_location , get_weapons 
-from services.experience import military_classification_bert , military_classification_xg_boost
+from services.experience import experience_bert , experience_xg_boost
 from pathlib import Path
 
 os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
@@ -170,9 +170,9 @@ def fetch_posts():
         for i in range(len(messages)) :
                 cleaned_message = preprocessing(messages[i])
                 if model == "Bert":
-                     exp_class = military_classification_bert(cleaned_message)
+                     exp_class = experience_bert(cleaned_message)
                 else :
-                     exp_class = military_classification_xg_boost(cleaned_message)
+                     exp_class = experience_xg_boost(cleaned_message)
 
                 if exp_class == 1:
                     exp_only_mes.append(messages[i])
