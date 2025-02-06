@@ -33,6 +33,7 @@ from ML_week_nlp_solving.backend.services.preproc import preprocessing
 from ML_week_nlp_solving.backend.services.odsr import get_o , get_d , get_c , get_r
 from ML_week_nlp_solving.backend.services.ner import get_name , get_location , get_weapons 
 from ML_week_nlp_solving.backend.services.experience import military_classification
+from pathlib import Path
 
 os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
 
@@ -48,56 +49,68 @@ app = Flask(__name__)
 CORS(app)
 
 
+DB_PATH = Path(__file__).resolve().parent / "database" / "database.db"
+
 def get_db_connection():
-    conn = sqlite3.connect("database/database.db")  # Використовуємо локальний файл SQLite
+    """Підключення до бази даних"""
+    conn = sqlite3.connect(DB_PATH)  
     conn.row_factory = sqlite3.Row  # Дозволяє доступ до стовпців за назвами
     return conn
 
-def save_final_mess(message_text, channel, date_time):
+def save_final_mess(message_text, channel, date_time, name, location, weapon):
+    """Зберігає повідомлення в таблиці TelegramPostInfo та повертає його MessageID"""
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
 
         cursor.execute(
             """
-            INSERT INTO TelegramPostInfo2 (Message, Channel, MessageDate)
-            VALUES (?, ?, ?)
+            INSERT INTO TelegramPostInfo (Message, Channel, MessageDate, Name, Location, Weapons)
+            VALUES (?, ?, ?, ?, ?, ?)
             """,
-            (message_text, channel, date_time)  # Передаємо параметри як кортеж
+            (message_text, channel, date_time, name, location, weapon)
         )
-        conn.commit()
-        conn.close()
 
-        print(f"✅ [{channel}] Збережено нове повідомлення.")
-    except Exception as e:
-        print(f"❌ [{channel}] Помилка збереження в БД: {e}")
+        message_id = cursor.lastrowid  # Отримуємо ID нового запису
 
-def save_odcr(message_id, message_text, channel, date_time, observation, discussion, conclusion, recommendation):
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-
-        cursor.execute(
-            """
-            INSERT INTO TelegramPostInfo2 (MessageID, Message, Channel, MessageDate, Observation, Discussion, Conclusion, Recommendation)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-            (message_id, message_text, channel, date_time, observation, discussion, conclusion, recommendation)  # Передаємо параметри як кортеж
-        )
         conn.commit()
         conn.close()
 
         print(f"✅ [{channel}] Збережено нове повідомлення з ID {message_id}.")
+        return message_id  # Повертаємо MessageID для подальшого використання
     except Exception as e:
         print(f"❌ [{channel}] Помилка збереження в БД: {e}")
+        return None
 
-def delete_old_posts():
-    """ Видаляємо всі записи в таблиці """
+def save_odcr(message_id, observation, discussion, conclusion, recommendation):
+    """Зберігає результати O-D-C-R аналізу у таблиці ODCRAnalysis"""
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        cursor.execute("DELETE FROM TelegramPostInfo2")
+        cursor.execute(
+            """
+            INSERT INTO ODCRAnalysis (MessageID, Observation, Discussion, Conclusion, Recommendation)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (message_id, observation, discussion, conclusion, recommendation)
+        )
+
+        conn.commit()
+        conn.close()
+
+        print(f"✅ Збережено аналіз O-D-C-R для повідомлення ID {message_id}.")
+    except Exception as e:
+        print(f"❌ Помилка збереження O-D-C-R в БД: {e}")
+
+def delete_old_posts():
+    """Видаляє всі повідомлення з TelegramPostInfo та пов’язані O-D-C-R аналізи"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Видаляємо всі записи у головній таблиці (завдяки ON DELETE CASCADE видаляться пов’язані записи у ODCRAnalysis)
+        cursor.execute("DELETE FROM TelegramPostInfo")
         conn.commit()
         conn.close()
 
@@ -165,9 +178,9 @@ def fetch_posts():
 
         for i in range(len(exp_only_mes)) :
             if i in ids_unique :
-                 save_final_mess(exp_only_mes[i], exp_only_channels[i], exp_only_date[i] ,exp_only_id[i] ,
+                 mes_id = save_final_mess(exp_only_mes[i], exp_only_channels[i], exp_only_date[i] ,
                         get_name(cleaned_messages[i]) ,get_location(cleaned_messages[i]) , get_weapons(cleaned_messages[i]) )  
-                 save_odcr(exp_only_id[i] , exp_only_mes[i], get_o(cleaned_messages[i]) ,
+                 save_odcr(mes_id ,  get_o(cleaned_messages[i]) ,
                         get_d(cleaned_messages[i]) , get_c(cleaned_messages[i]) , get_r(cleaned_messages[i]))
 
 
