@@ -68,11 +68,9 @@ class MessageManager:
 
 
 
-def rm_dublicates(manager , df_current ,day_range = 1):
+def rm_dublicates(manager , test_messages ,test_times ,test_ids ,day_range = 1):
 
-     test_messages = df_current['Message'].to_list()
-     test_times = df_current['MessageDate'].to_list()
-     test_ids = df_current['TelegramPostInfoID'].to_list()
+
      res_ids = []
 
      for i in range(len(test_messages)):

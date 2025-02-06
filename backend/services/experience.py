@@ -25,7 +25,7 @@ from transformers import pipeline
 import torch
 import pandas as pd
 import csv
-from ML_week_nlp_solving.backend.services.remove_dublicates import MessageManager , rm_dublicates
+
 import sqlite3
 import pandas as pd
 import csv

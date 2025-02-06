@@ -51,14 +51,15 @@ CORS(app)
 
 DB_PATH = Path(__file__).resolve().parent / "database" / "database.db"
 print(DB_PATH)
+
 def get_db_connection():
-    """Підключення до бази даних"""
+
     conn = sqlite3.connect(DB_PATH)  
-    conn.row_factory = sqlite3.Row  # Дозволяє доступ до стовпців за назвами
+    conn.row_factory = sqlite3.Row 
     return conn
 
 def save_final_mess(message_text, channel, date_time, name, location, weapon):
-    """Зберігає повідомлення в таблиці TelegramPostInfo та повертає його MessageID"""
+
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -71,19 +72,19 @@ def save_final_mess(message_text, channel, date_time, name, location, weapon):
             (message_text, channel, date_time, name, location, weapon)
         )
 
-        message_id = cursor.lastrowid  # Отримуємо ID нового запису
+        message_id = cursor.lastrowid  
 
         conn.commit()
         conn.close()
 
         print(f"✅ [{channel}] Збережено нове повідомлення з ID {message_id}.")
-        return message_id  # Повертаємо MessageID для подальшого використання
+        return message_id  
     except Exception as e:
         print(f"❌ [{channel}] Помилка збереження в БД: {e}")
         return None
 
 def save_odcr(message_id, observation, discussion, conclusion, recommendation):
-    """Зберігає результати O-D-C-R аналізу у таблиці ODCRAnalysis"""
+
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -103,29 +104,33 @@ def save_odcr(message_id, observation, discussion, conclusion, recommendation):
     except Exception as e:
         print(f"❌ Помилка збереження O-D-C-R в БД: {e}")
 
+
 def delete_old_posts():
-    """Видаляє всі повідомлення з TelegramPostInfo та пов’язані O-D-C-R аналізи"""
+
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-
-        # Видаляємо всі записи у головній таблиці (завдяки ON DELETE CASCADE видаляться пов’язані записи у ODCRAnalysis)
+        cursor.execute("DELETE FROM ODCRAnalysis")
         cursor.execute("DELETE FROM TelegramPostInfo")
+
         conn.commit()
         conn.close()
 
-        print(f"✅ Видалено всі повідомлення.")
+        print(f"✅ Видалено всі записи з таблиць TelegramPostInfo та ODCRAnalysis.")
     except Exception as e:
-        print(f"❌ Помилка при видаленні старих повідомлень: {e}")
+        print(f"❌ Помилка при видаленні старих записів: {e}")
+
+
+
 
 def get_tg_messages(app, start_date, end_date, channel_name):
-    """ Отримуємо 10 повідомлень у заданому діапазоні дат """
+
 
     try:
-        messages = ["Росія планує наступ завтра" , "Бои под Авдєєвкой продолжаются" ,"Получили новое вооружение - гранати" ]
-        dates = ["2029-01-28 19:28:10.123", "2029-01-29 10:00:00.000", "2029-01-28 19:28:10.123"]
-        channels = ["c1", "c2", "c3"]
-        ids = [1, 2, 3]
+        messages = ["Росія планує наступ завтра" , "Бои под Авдєєвкой продолжаются" ,"Получили новое вооружение - гранати","Получили новое вооружение - гранати" ]
+        dates = ["2029-01-28 19:28:10.123", "2029-01-29 10:00:00.000", "2029-01-28 19:28:10.123" , "2029-01-28 19:28:10.123"]
+        channels = ["c1", "c2", "c3", "c3"]
+        ids = [1, 2, 3, 4]
 
         # messages = {
         #     "Message": ["Росія планує наступ завтра" , "Бои под Авдєєвкой продолжаются" ,"Получили новое вооружение - гранати" ],
@@ -159,7 +164,7 @@ def fetch_posts():
         exp_only_id = []
         exp_only_channels = []
 
-
+        print(messages)
         cleaned_messages = []
 
         for i in range(len(messages)) :
@@ -178,10 +183,11 @@ def fetch_posts():
                     cleaned_messages.append(cleaned_message)
 
         manager = MessageManager()
-        ids_unique = rm_dublicates(manager , cleaned_messages)
 
+        ids_unique = rm_dublicates(manager , cleaned_messages ,exp_only_date ,exp_only_id ) #rm_dublicates(manager , cleaned_messages)
+        print(ids_unique)
         for i in range(len(exp_only_mes)) :
-            if i in ids_unique :
+            if exp_only_id[i] in ids_unique :
                  mes_id = save_final_mess(exp_only_mes[i], exp_only_channels[i], exp_only_date[i] ,
                         get_name(cleaned_messages[i]) ,get_location(cleaned_messages[i]) , get_weapons(cleaned_messages[i]) )  
                  save_odcr(mes_id ,  get_o(cleaned_messages[i]) ,
@@ -198,23 +204,34 @@ def fetch_posts():
 
 @app.route('/api/posts', methods=['GET'])
 def get_posts():
+    """Отримує всі повідомлення з бази даних та повертає ті ж дані, що й попередня функція"""
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        
-        query = "SELECT * FROM TelegramPostInfo"
+        query = "SELECT MessageID, Message, Channel, MessageDate FROM TelegramPostInfo"
         cursor.execute(query)
         rows = cursor.fetchall()
-
-        # В SQLite потрібно передавати значення як tuple-елементи
-        posts = [{"TelegramPostInfoID": row[0], "Message": row[1], "Channel": row[2], "MessageDate": row[3]} for row in rows]
-
         conn.close()
+
+
+        posts = [
+            {
+                "TelegramPostInfoID": row["MessageID"],  
+                "Message": row["Message"],
+                "Channel": row["Channel"],
+                "MessageDate": row["MessageDate"]
+            }
+            for row in rows
+        ]
 
         return jsonify(posts), 200
     except Exception as e:
-        print(e)
+        print(f"❌ Помилка отримання повідомлень: {e}")
         return jsonify({"error": f"Помилка при отриманні повідомлень: {e}"}), 500
+
+
+
+
 
 
 if __name__ == '__main__':
