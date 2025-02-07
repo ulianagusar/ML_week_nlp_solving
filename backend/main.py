@@ -1,7 +1,4 @@
 #pip install TgCrypto
-
-
-import sys
 import xgboost as xgb
 from pyrogram import Client
 from datetime import datetime
@@ -9,26 +6,14 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 import asyncio
 import pandas as pd
-import emoji
-import openai
-import re
 from sentence_transformers import SentenceTransformer
 import numpy as np
-import faiss
-import pickle
 import os
-import torch
-from transformers import AutoTokenizer, AutoModelForSequenceClassification
-from transformers import AutoModelForSequenceClassification, AutoTokenizer
-import spacy
 from transformers import pipeline
-import torch
 import pandas as pd
-import csv
 from services.remove_dublicates import MessageManager , rm_dublicates
 import sqlite3
 import pandas as pd
-import csv
 from services.preproc import preprocessing
 from services.odsr import get_o , get_d , get_c , get_r
 from services.ner import get_name , get_location , get_weapons 
@@ -100,24 +85,67 @@ def delete_old_posts():
 
 
 
-def get_tg_messages(app, start_date, end_date, channel_name):
+# def get_tg_messages(app, start_date, end_date, channel_name):
 
 
-    try:
-        messages = ["Росія планує наступ завтра" , "Бои под Авдєєвкой продолжаются , скоро откроют новую продвижную дорогу , по которой пройдет наш пихотний батальйон" ,"Получили новое вооружение - гранати","Получили новое вооружение - гранати" ]
-        dates = ["2029-01-28 19:28:10.123", "2029-01-29 10:00:00.000", "2029-01-28 19:28:10.123" , "2029-01-28 19:28:10.123"]
-        channels = ["c1", "c2", "c3", "c3"]
-        ids = [5, 6, 7, 8]
+#     try:
+#         messages = ["Росія планує наступ завтра" , "Бои под Авдєєвкой продолжаются , скоро откроют новую продвижную дорогу , по которой пройдет наш пихотний батальйон" ,"Получили новое вооружение - гранати","Получили новое вооружение - гранати" ]
+#         dates = ["2029-01-28 19:28:10.123", "2029-01-29 10:00:00.000", "2029-01-28 19:28:10.123" , "2029-01-28 19:28:10.123"]
+#         channels = ["c1", "c2", "c3", "c3"]
+#         ids = [5, 6, 7, 8]
 
-        # messages = {
-        #     "Message": ["Росія планує наступ завтра" , "Бои под Авдєєвкой продолжаются" ,"Получили новое вооружение - гранати" ],
-        #     "MessageDate": ["2029-01-28 19:28:10.123", "2029-01-29 10:00:00.000", "2029-01-28 19:28:10.123"],
-        #     "TelegramPostInfoID": [1, 2, 3]
-        # }
-        return messages , dates , channels , ids
-    except Exception as e:
-        print(f"Error when receiving messages {e}")
-        return None , None , None
+#         # messages = {
+#         #     "Message": ["Росія планує наступ завтра" , "Бои под Авдєєвкой продолжаются" ,"Получили новое вооружение - гранати" ],
+#         #     "MessageDate": ["2029-01-28 19:28:10.123", "2029-01-29 10:00:00.000", "2029-01-28 19:28:10.123"],
+#         #     "TelegramPostInfoID": [1, 2, 3]
+#         # }
+#         return messages , dates , channels , ids
+#     except Exception as e:
+#         print(f"Error when receiving messages {e}")
+#         return None , None , None
+
+
+
+async def fetch_messages(start_date, end_date, channel_name):
+    if channel_name == "Вертолатте":
+        channel = "@vertolatte"
+    elif channel_name == "ДРОННИЦА":
+        channel = "@dronnitsa"
+    else:
+        channel = "@donbassrussiazvo"
+
+    # start_date = datetime.strptime(start_date, "%Y-%m-%d")
+    # end_date = datetime.strptime(end_date, "%Y-%m-%d")
+    
+    messages, dates, channels, ids = [], [], [], []
+    
+
+    async with Client("military_bot", API_ID, API_HASH) as app:
+        try:
+            chat = await app.get_chat(channel)
+
+            async for message in app.get_chat_history(chat.id):
+                print(message)
+                if not message.date or message.date < start_date:
+                    break
+                
+                if start_date <= message.date <= end_date:
+                    message_text = message.text if message.text else message.caption
+                    if message_text:
+                        messages.append(message_text)
+                        print(message_text)
+                        dates.append(message.date.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3])
+                        channels.append(channel)
+                        ids.append(message.id)
+
+        except Exception as e:
+            print(f"Error receiving messages:  {e}")
+
+    return messages, dates, channels, ids
+
+def get_messages_sync(start_date, end_date, channel_name):
+
+    return asyncio.run(fetch_messages(start_date, end_date, channel_name))
 
 
 
@@ -134,14 +162,15 @@ def fetch_posts():
         end_date = datetime.strptime(end_date_str, "%Y-%m-%d")
 
         delete_old_posts()
-        messages , dates , channels , ids  = get_tg_messages(app, start_date, end_date, channel_name)
+       # messages , dates , channels , ids  = get_tg_messages(app, start_date, end_date, channel_name)
+        messages , dates , channels , ids = get_messages_sync(start_date, end_date, channel_name)
 
         exp_only_mes = []
         exp_only_date = []
         exp_only_id = []
         exp_only_channels = []
 
-        print(messages)
+
         cleaned_messages = []
 
         for i in range(len(messages)) :
