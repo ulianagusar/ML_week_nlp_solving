@@ -146,7 +146,7 @@ def fetch_posts():
 
         for i in range(len(messages)) :
                 cleaned_message = preprocessing(messages[i])
-                if model == "Bert":
+                if model == "ruBert":
                      exp_class = experience_bert(cleaned_message)
                 else :
                      exp_class = experience_xg_boost(cleaned_message)
