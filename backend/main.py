@@ -78,9 +78,8 @@ def save_data(message_id, message_text, channel, date_time, name, location, weap
         conn.commit()
         conn.close()
 
-        print(f"✅ [{channel}] Збережено повідомлення з ID {message_id}.")
     except Exception as e:
-        print(f"❌ [{channel}] Помилка збереження в БД: {e}")
+        print(f"Error saving to the database: {e}")
 
 
 
@@ -95,9 +94,9 @@ def delete_old_posts():
         conn.commit()
         conn.close()
 
-        print("✅ Видалено всі записи з таблиці TelegramPostInfo.")
+        print("Deleted all records from the TelegramPostInfo table.")
     except Exception as e:
-        print(f"❌ Помилка при видаленні записів: {e}")
+        print(f"Error deleting records:  {e}")
 
 
 
@@ -117,7 +116,7 @@ def get_tg_messages(app, start_date, end_date, channel_name):
         # }
         return messages , dates , channels , ids
     except Exception as e:
-        print(f"❌ Помилка при отриманні повідомлень: {e}")
+        print(f"Error when receiving messages {e}")
         return None , None , None
 
 
@@ -172,10 +171,10 @@ def fetch_posts():
 
 
 
-        return jsonify({"message": "Повідомлення успішно отримані та збережені"}), 200
+        return jsonify({"message": "Messages successfully received and saved"}), 200
     except Exception as e:
         print(e)
-        return jsonify({"error": f"Помилка: {e}"}), 500
+        return jsonify({"error": f"error fetch_posts: {e}"}), 500
 
 
 
@@ -204,8 +203,8 @@ def get_posts():
 
         return jsonify(posts), 200
     except Exception as e:
-        print(f"❌ Помилка отримання повідомлень: {e}")
-        return jsonify({"error": f"Помилка при отриманні повідомлень: {e}"}), 500
+        print(f"Error receiving messages {e}")
+        return jsonify({"error": f"Error when receiving messages: {e}"}), 500
 
 
 
