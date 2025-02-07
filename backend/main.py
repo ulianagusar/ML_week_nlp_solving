@@ -182,7 +182,7 @@ def fetch_posts():
 
 @app.route('/api/posts', methods=['GET'])
 def get_posts():
-    """Отримує всі повідомлення з бази даних та повертає ті ж дані, що й попередня функція"""
+
     try:
         conn = get_db_connection()
         cursor = conn.cursor()

@@ -101,18 +101,19 @@ def rm_dublicates(manager , test_messages ,test_times ,test_ids ,day_range = 1):
                print(new_msg)
                print("There are similar ones - check the time")
                # There are similar ones - check the time
-               nearest_message, nearest_timestamp = result
+            #    nearest_message, nearest_timestamp = result
 
-               nearest_dt = datetime.strptime(nearest_timestamp, "%Y-%m-%d %H:%M:%S.%f")
-               #end_dt time of the current message
-               end_dt = datetime.strptime(new_timestamp, "%Y-%m-%d %H:%M:%S.%f")
-               # start_dt the day_range before the current day
-               start_dt = end_dt - timedelta(days=day_range)
-               if not (start_dt <= nearest_dt <= end_dt) :
-                    # there are no similar ones in the specified time range - write 
-                    print("there are no similar ones in the specified time range - write ")
-                    manager.add_new_message(new_msg , new_timestamp)
-                    res_ids.append(new_id)
-               else:
-                    print("similar record in the specified time range - don't write")
+            #    nearest_dt = datetime.strptime(nearest_timestamp, "%Y-%m-%d %H:%M:%S.%f")
+            #    #end_dt time of the current message
+            #    end_dt = datetime.strptime(new_timestamp, "%Y-%m-%d %H:%M:%S.%f")
+            #    # start_dt the day_range before the current day
+            #    start_dt = end_dt - timedelta(days=day_range)
+            #    if not (start_dt <= nearest_dt <= end_dt) :
+            #         # there are no similar ones in the specified time range - write 
+            #         print("there are no similar ones in the specified time range - write ")
+            #         manager.add_new_message(new_msg , new_timestamp)
+            #         res_ids.append(new_id)
+            #    else:
+            #         print("similar record in the specified time range - don't write")
+     manager.shutdown()
      return res_ids
