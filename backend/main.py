@@ -186,9 +186,14 @@ def fetch_posts():
                      print(exp_class)
                      #experience_bert1(cleaned_message)
                 else :
+                     api_xgboost = "http://127.0.0.1:5003/predict/xgboost"
+                     test_data = {"text": cleaned_message}
+                     response = requests.post(api_xgboost, json=test_data)
+                     exp_class = response.json().get("prediction")
+                     print(exp_class)
                     # exp_class = experience_xg_boost(cleaned_message)
-                    exp_class =1
-                print(exp_class)
+                    # exp_class =1
+              #  print(exp_class)
                 if exp_class == 1:
                     exp_only_mes.append(messages[i])
                     exp_only_date.append(dates[i])
