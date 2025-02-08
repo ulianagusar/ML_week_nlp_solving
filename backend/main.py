@@ -17,7 +17,7 @@ import pandas as pd
 from services.preproc import preprocessing
 from services.odsr import get_o , get_d , get_c , get_r
 from services.ner import get_name , get_location , get_weapons 
-from services.experience import experience_bert , experience_xg_boost
+import requests
 from pathlib import Path
 
 os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
@@ -145,15 +145,9 @@ async def fetch_messages(start_date, end_date, channel_name):
     return messages, dates, channels, ids
 
 
-
-
-
-
 def get_messages_sync(start_date, end_date, channel_name):
 
     return asyncio.run(fetch_messages(start_date, end_date, channel_name))
-
-
 
 @app.route('/api/fetch_posts', methods=['POST'])
 def fetch_posts():
@@ -182,9 +176,15 @@ def fetch_posts():
         for i in range(len(messages)) :
                 cleaned_message = preprocessing(messages[i])
                 if model == "ruBert":
-                     exp_class = experience_bert(cleaned_message)
+                     api_bert = "http://127.0.0.1:5003/predict/bert"
+                     test_data = {"text": cleaned_message}
+                     response = requests.post(api_bert, json=test_data)
+                     exp_class = response.json().get("prediction")
+                     print(exp_class)
+                     #experience_bert1(cleaned_message)
                 else :
-                     exp_class = experience_xg_boost(cleaned_message)
+                    # exp_class = experience_xg_boost(cleaned_message)
+                    exp_class =1
                 print(exp_class)
                 if exp_class == 1:
                     exp_only_mes.append(messages[i])
@@ -200,7 +200,9 @@ def fetch_posts():
         print(ids_unique)
         for i in range(len(exp_only_mes)) :
             if exp_only_id[i] in ids_unique :
-                 
+                 print(get_name(cleaned_messages[i]))
+                 print(get_location(cleaned_messages[i]))
+                 print(get_weapons(cleaned_messages[i]))
                  save_data(exp_only_id[i], exp_only_mes[i], exp_only_channels[i], exp_only_date[i], get_name(cleaned_messages[i]), get_location(cleaned_messages[i]),
                             get_weapons(cleaned_messages[i]) , get_o(cleaned_messages[i]), get_d(cleaned_messages[i]), get_c(cleaned_messages[i]), get_r(cleaned_messages[i]))
 
@@ -245,6 +247,19 @@ def get_posts():
 
 
 
+# import atexit
+# import multiprocessing
+
+# def cleanup():
+#     try:
+#         multiprocessing.resource_tracker._CLEANUP_INTERVAL = 0  # Вимикаємо автоматичне очищення
+#         multiprocessing.resource_tracker._STOP = True  # Примусово закриваємо ресурси
+#     except Exception as e:
+#         print(f"Помилка під час очищення ресурсів: {e}")
+
+# # Реєструємо cleanup при завершенні програми
+# atexit.register(cleanup)
+
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5001)
+    app.run( debug = True , host='0.0.0.0', port=5001)
