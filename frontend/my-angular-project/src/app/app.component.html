@@ -11,7 +11,7 @@
             </div>
 
             <div class="dropdown">
-                <select (change)="onModelsChange($event)" class="channel-dropdown">
+                <select (change)="onModelChange($event)" class="channel-dropdown">
                   <option value="all">Модель</option>
                   <option *ngFor="let model of models" [value]="model">{{ model }}</option>
               </select>

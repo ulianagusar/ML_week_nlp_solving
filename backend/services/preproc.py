@@ -19,10 +19,21 @@ def remove_flags_and_keycaps(text):
     text_cleaned = keycap_pattern.sub('', text_no_flags)
 
     return text_cleaned
+import re
+
+def clean_text(text: str) -> str:
+
+    if not isinstance(text, str):
+        return text  
+
+    text = re.sub(r'[\n\r\t,]', ' ', text)  
+    text = re.sub(r'\s+', ' ', text).strip()  
+    return text
 
 
 def preprocessing(mess):
     new_mes = emoji_free(mess)
     mes2 = remove_flags(new_mes)
     mes3 = remove_flags_and_keycaps(mes2)
-    return mes3
+    mes4 = clean_text(mes3)
+    return mes4

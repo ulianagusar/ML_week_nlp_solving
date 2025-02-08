@@ -2,7 +2,7 @@
 import xgboost as xgb
 from pyrogram import Client
 from datetime import datetime
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request , Response
 from flask_cors import CORS
 import asyncio
 import pandas as pd
@@ -203,7 +203,7 @@ def fetch_posts():
                  print(get_name(cleaned_messages[i]))
                  print(get_location(cleaned_messages[i]))
                  print(get_weapons(cleaned_messages[i]))
-                 save_data(exp_only_id[i], exp_only_mes[i], exp_only_channels[i], exp_only_date[i], get_name(cleaned_messages[i]), get_location(cleaned_messages[i]),
+                 save_data(exp_only_id[i], cleaned_messages[i], exp_only_channels[i], exp_only_date[i], get_name(cleaned_messages[i]), get_location(cleaned_messages[i]),
                             get_weapons(cleaned_messages[i]) , get_o(cleaned_messages[i]), get_d(cleaned_messages[i]), get_c(cleaned_messages[i]), get_r(cleaned_messages[i]))
 
 
@@ -244,21 +244,85 @@ def get_posts():
         return jsonify({"error": f"Error when receiving messages: {e}"}), 500
 
 
+import sqlite3
+import csv
+import io
+
+# def get_db_data():
+#     """ Отримання даних із бази """
+#     conn = get_db_connection()
+#     cursor = conn.cursor()
+#     cursor.execute("SELECT * FROM TelegramPostInfo")
+#     rows = cursor.fetchall()
+#     conn.close()
+
+#     # Перетворюємо у потрібний формат
+
+#     columns = [
+#         "MessageID", "Message", "Channel", "MessageDate", "Name",
+#         "Location", "Weapons", "Observation", "Discussion", "Conclusion", "Recommendation"
+#     ]
+
+#     # Формуємо список словників для JSON-відповіді
+#     data = [dict(zip(columns, row)) for row in rows]
+#     print(data)
+#     return data
+
+# @app.route('/api/get_report', methods=['GET'])
+# def get_report():
+#     """ API повертає JSON-список """
+#     data = get_db_data()
+
+#     if not data:
+#         # Повертаємо тестові дані, якщо в БД немає записів
+#         data = [
+#             {"Channel": "Вертолатте", "Content": "Тестовий пост 1", "Date": "2024-02-08", "Model": "ruBert"},
+#             {"Channel": "ДРОННИЦА", "Content": "Тестовий пост 2", "Date": "2024-02-07", "Model": "xgboost"},
+#             {"Channel": "Донбасс Россия", "Content": "Тестовий пост 3", "Date": "2024-02-06", "Model": "ruBert"}
+#         ]
+
+#     return jsonify(data)
+
+from flask import Flask, Response
+import sqlite3
+import csv
+import io
+
+
+def get_db_data():
+    """Отримання всіх даних із таблиці TelegramPostInfo"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM TelegramPostInfo")
+    rows = cursor.fetchall()
+
+    # Отримуємо назви колонок динамічно
+    column_names = [description[0] for description in cursor.description]
+    conn.close()
+
+    return column_names, rows
+
+@app.route('/api/get_report', methods=['GET'])
+def download_csv():
+    """API повертає готовий CSV-файл"""
+    column_names, data = get_db_data()
+
+    if not data:
+        return Response("Немає даних для експорту", status=204)
+
+    # Формуємо CSV-файл у пам'яті
+    output = io.StringIO()
+    csv_writer = csv.writer(output)
+
+    csv_writer.writerow(column_names)  # Записуємо заголовки
+    csv_writer.writerows(data)  # Записуємо рядки
+
+    response = Response(output.getvalue(), content_type="text/csv")
+    response.headers["Content-Disposition"] = "attachment; filename=report.csv"
+    return response
 
 
 
-# import atexit
-# import multiprocessing
-
-# def cleanup():
-#     try:
-#         multiprocessing.resource_tracker._CLEANUP_INTERVAL = 0  # Вимикаємо автоматичне очищення
-#         multiprocessing.resource_tracker._STOP = True  # Примусово закриваємо ресурси
-#     except Exception as e:
-#         print(f"Помилка під час очищення ресурсів: {e}")
-
-# # Реєструємо cleanup при завершенні програми
-# atexit.register(cleanup)
 
 
 if __name__ == '__main__':

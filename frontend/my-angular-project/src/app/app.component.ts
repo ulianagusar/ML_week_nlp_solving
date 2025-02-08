@@ -90,129 +90,107 @@
 import { Component, OnInit } from '@angular/core';
 import { HttpClientModule } from '@angular/common/http';
 import { HttpClient } from '@angular/common/http';
-import { CommonModule } from '@angular/common'; 
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-root',
-  standalone: true,  
-  imports: [CommonModule, HttpClientModule],  
+  standalone: true,
+  imports: [CommonModule, HttpClientModule],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css']
 })
 export class AppComponent implements OnInit {
   title = 'my-angular-project';
-  posts: any[] = [];  
-  filteredPosts: any[] = []; 
-  model: any[] = [];  
-  filteredModels: any[] = []; 
-  channels: string[] = ['Вертолатте', 'ДРОННИЦА', 'Донбасс Россия']; 
+  posts: any[] = [];
+  filteredPosts: any[] = [];
+  channels: string[] = ['Вертолатте', 'ДРОННИЦА', 'Донбасс Россия'];
   models: string[] = ['ruBert', 'xgboost'];
-  selectedChannel: string = 'all';  
-  selectedModels: string = 'all';
+  selectedChannel: string = 'all';
+  selectedModel: string = 'all';
   selectedStartDate: string | undefined;
   selectedEndDate: string | undefined;
 
   constructor(private http: HttpClient) {}
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    this.fetchPosts();
+  }
+
+  fetchPosts(): void {
+    this.http.get<any[]>('http://127.0.0.1:5001/api/posts')
+      .subscribe({
+        next: (data) => {
+          this.posts = data;
+          this.filteredPosts = data;
+        },
+        error: (error) => {
+          console.error('Помилка при отриманні постів:', error);
+        }
+      });
+  }
 
   onChannelChange(event: any): void {
     this.selectedChannel = event.target.value;
-
-    if (this.selectedChannel === 'all') {
-      this.filteredPosts = this.posts; 
-    } else {
-      this.filteredPosts = this.posts.filter(post => post.Channel === this.selectedChannel);
-    }
+    this.applyFilters();
   }
 
-  onModelsChange(event: any): void {
-    this.selectedModels = event.target.value;
-
-    if (this.selectedModels === 'all') {
-      this.filteredModels = this.model; 
-    } else {
-      this.filteredModels = this.model.filter(post => post.models === this.selectedModels);
-    }
+  onModelChange(event: any): void {
+    this.selectedModel = event.target.value;
+    this.applyFilters();
   }
 
   onStartDateChange(event: any): void {
     this.selectedStartDate = event.target.value;
+    this.applyFilters();
   }
 
   onEndDateChange(event: any): void {
     this.selectedEndDate = event.target.value;
+    this.applyFilters();
+  }
+
+  applyFilters(): void {
+    this.filteredPosts = this.posts.filter(post => {
+      return (this.selectedChannel === 'all' || post.Channel === this.selectedChannel) &&
+             (this.selectedModel === 'all' || post.Model === this.selectedModel) &&
+             (!this.selectedStartDate || new Date(post.MessageDate) >= new Date(this.selectedStartDate)) &&
+             (!this.selectedEndDate || new Date(post.MessageDate) <= new Date(this.selectedEndDate));
+    });
   }
 
   onSearch(): void {
     const requestBody = {
-      channel: this.selectedChannel,
-      start_date: this.selectedStartDate,
-      end_date: this.selectedEndDate,
-      model: this.selectedModels
+      channel: this.selectedChannel !== 'all' ? this.selectedChannel : null,
+      start_date: this.selectedStartDate || null,
+      end_date: this.selectedEndDate || null,
+      model: this.selectedModel !== 'all' ? this.selectedModel : null
     };
-    console.log(requestBody);
+
+    console.log('Відправка запиту:', requestBody);
     
     this.http.post('http://127.0.0.1:5001/api/fetch_posts', requestBody)
       .subscribe({
-        next: () => {
-          this.http.get<any[]>('http://127.0.0.1:5001/api/posts')
-            .subscribe(data => {
-              console.log(data);
-              this.posts = data;
-              this.filteredPosts = data;
-            }, error => {
-              console.error('Помилка при отриманні постів:', error);
-            });
-        },
-        error: (error) => {
-          console.error('Помилка при виконанні POST запиту:', error);
-        }
+        next: () => this.fetchPosts(),
+        error: (error) => console.error('Помилка при виконанні POST запиту:', error)
       });
   }
 
   onDownloadCSV(): void {
-    this.http.get<any[]>('http://127.0.0.1:5001/api/posts')
+    this.http.get('http://127.0.0.1:5001/api/get_report', { responseType: 'blob' })
       .subscribe({
-        next: (data) => {
-          if (data.length === 0) {
-            console.warn('Немає даних для експорту, використовується тестовий набір.');
-            data = this.getTestData();
-          }
-          const csvData = this.convertToCSV(data);
-          this.downloadFile(csvData, 'ODCR.csv');
+        next: (blob) => {
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'ODCR.csv';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          window.URL.revokeObjectURL(url);
         },
         error: (error) => {
-          console.error('Помилка при отриманні постів, використовується тестовий набір:', error);
-          const csvData = this.convertToCSV(this.getTestData());
-          this.downloadFile(csvData, 'ODCR.csv');
+          console.error('Помилка при завантаженні CSV:', error);
         }
       });
-  }
-
-  private getTestData(): any[] {
-    return [
-      { Channel: 'Вертолатте', Content: 'Тестовий пост 1', Date: '2024-02-08', Model: 'ruBert' },
-      { Channel: 'ДРОННИЦА', Content: 'Тестовий пост 2', Date: '2024-02-07', Model: 'xgboost' },
-      { Channel: 'Донбасс Россия', Content: 'Тестовий пост 3', Date: '2024-02-06', Model: 'ruBert' }
-    ];
-  }
-
-  private convertToCSV(data: any[]): string {
-    const headers = Object.keys(data[0]).join(',') + '\n';
-    const rows = data.map(row => Object.values(row).join(',')).join('\n');
-    return headers + rows;
-  }
-
-  private downloadFile(csvData: string, filename: string): void {
-    const blob = new Blob([csvData], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
   }
 }
