@@ -15,7 +15,7 @@ from services.remove_dublicates import MessageManager , rm_dublicates
 import sqlite3
 import pandas as pd
 from services.preproc import preprocessing
-from services.odsr import get_o , get_d , get_c , get_r
+from services.odsr import generate_odcr_report
 from services.ner import get_name , get_location , get_weapons 
 import requests
 from pathlib import Path
@@ -203,11 +203,9 @@ def fetch_posts():
         print(ids_unique)
         for i in range(len(exp_only_mes)) :
             if exp_only_id[i] in ids_unique :
-                 print(get_name(cleaned_messages[i]))
-                 print(get_location(cleaned_messages[i]))
-                 print(get_weapons(cleaned_messages[i]))
-                 save_data(exp_only_id[i], cleaned_messages[i], exp_only_channels[i], exp_only_date[i], get_name(cleaned_messages[i]), get_location(cleaned_messages[i]),
-                            get_weapons(cleaned_messages[i]) , get_o(cleaned_messages[i]), get_d(cleaned_messages[i]), get_c(cleaned_messages[i]), get_r(cleaned_messages[i]))
+                o, d, c, r, t = generate_odcr_report(cleaned_messages[i])
+                save_data(exp_only_id[i], cleaned_messages[i], exp_only_channels[i], exp_only_date[i], get_name(cleaned_messages[i]), get_location(cleaned_messages[i]),
+                            get_weapons(cleaned_messages[i]) , o, d, c, r)
 
 
 

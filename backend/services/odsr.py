@@ -53,6 +53,68 @@ from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, T5Tokenizer, T5Fo
 
 
 
+import openai
+import json
+openai.api_key = api_key
+
+
+def generate_odcr_report(input_message):
+    """Generate ODCR report with error handling"""
+    try:
+        prompt = f"""
+        Convert the following message into an ODCR report and return the result strictly in valid JSON format.
+
+        Message:
+        {input_message}
+
+        The JSON structure should be:
+        {{
+            "O": "Observation - Briefly describe the issue or problem and its resolution.",
+            "D": "Discussion - Expand on the observation with key details (who, what, where, when, why, how) and its impact on operations.",
+            "C": "Conclusion - Summarize key points and support the recommendation.",
+            "R": "Recommendation - Suggest actions to resolve the issue, including responsible parties.",
+            "T": "Type - Specify which branch of the military this information may be useful for: Наземні війська, Повітряні війська, Морські війська, Десантно-штурмові війська, Війська підтримки, or None."
+        }}
+
+        Answer only in Russian and return strictly valid JSON with no additional text.
+        """
+
+        completion = openai.ChatCompletion.create(
+            model="gpt-4",
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant."},
+                {"role": "user", "content": prompt}
+            ],
+            max_tokens=500
+        )
+        
+        # Отримуємо текст відповіді
+        content = completion['choices'][0]['message']['content'].strip()
+        
+        # Перетворюємо JSON-рядок у Python-об'єкт
+        report = json.loads(content)
+        
+        return report.get("O", ""), report.get("D", ""), report.get("C", ""), report.get("R", ""), report.get("T", "") 
+
+    except Exception as e:
+        print(f"Error generating ODCR report: {e}")
+        return "", "", "", "", ""
+
+
+# text = '''Во время учебного полета была потеряна связь с самолетом на расстоянии 1,7 км. Последние показания по пичу дали гипотезу о возможной неисправности сервы.
+# Мы пытались найти его на некотором расстоянии от последних координат, в сторону ветра, предполагая, что самолет мог унести по ветру. В итоге зашли в радиус 25 м от точки координат последней зафиксированной.
+# Ожидалось, что самолет еще некоторое время летел и был унесен в сторону ветра.
+# Таким образом, при потере самолета следует начинать поиски с самого простого и/или ближайшего варианта. По возможности иметь резервную (аварийную) автономную систему передачи координат самолета.
+# Предлагаю добавить в самолет аварийную систему GPS для определения координат местоположения борта.'''
+
+
+# o, d, c, r, t = generate_odcr_report(text)
+
+# print (o, '\n', d, '\n', c, '\n', r, '\n', t)
+
+
+
+
 def get_o(mes):
 
     return "o"
@@ -70,3 +132,5 @@ def get_r(mes):
 
     return "r"
 
+# def generate_odcr_report(input_message):
+#     return "", "", "", "", ""
