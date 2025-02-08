@@ -100,6 +100,7 @@ def rm_dublicates(manager , test_messages ,test_times ,test_ids ,day_range = 1):
           else: 
                print(new_msg)
                print("There are similar ones - check the time")
+
                # There are similar ones - check the time
             #    nearest_message, nearest_timestamp = result
 
@@ -115,5 +116,6 @@ def rm_dublicates(manager , test_messages ,test_times ,test_ids ,day_range = 1):
             #         res_ids.append(new_id)
             #    else:
             #         print("similar record in the specified time range - don't write")
+                 
      manager.shutdown()
      return res_ids

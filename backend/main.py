@@ -125,7 +125,7 @@ async def fetch_messages(start_date, end_date, channel_name):
             chat = await app.get_chat(channel)
 
             async for message in app.get_chat_history(chat.id):
-                print(message)
+                
                 if not message.date or message.date < start_date:
                     break
                 
@@ -140,8 +140,14 @@ async def fetch_messages(start_date, end_date, channel_name):
 
         except Exception as e:
             print(f"Error receiving messages:  {e}")
-
+        finally:
+            await app.stop() 
     return messages, dates, channels, ids
+
+
+
+
+
 
 def get_messages_sync(start_date, end_date, channel_name):
 
@@ -179,7 +185,7 @@ def fetch_posts():
                      exp_class = experience_bert(cleaned_message)
                 else :
                      exp_class = experience_xg_boost(cleaned_message)
-
+                print(exp_class)
                 if exp_class == 1:
                     exp_only_mes.append(messages[i])
                     exp_only_date.append(dates[i])
