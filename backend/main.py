@@ -19,7 +19,10 @@ from services.odsr import get_o , get_d , get_c , get_r
 from services.ner import get_name , get_location , get_weapons 
 import requests
 from pathlib import Path
-
+from flask import Flask, Response
+import sqlite3
+import csv
+import io
 os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
 
 API_ID = 28167910
@@ -244,59 +247,15 @@ def get_posts():
         return jsonify({"error": f"Error when receiving messages: {e}"}), 500
 
 
-import sqlite3
-import csv
-import io
-
-# def get_db_data():
-#     """ Отримання даних із бази """
-#     conn = get_db_connection()
-#     cursor = conn.cursor()
-#     cursor.execute("SELECT * FROM TelegramPostInfo")
-#     rows = cursor.fetchall()
-#     conn.close()
-
-#     # Перетворюємо у потрібний формат
-
-#     columns = [
-#         "MessageID", "Message", "Channel", "MessageDate", "Name",
-#         "Location", "Weapons", "Observation", "Discussion", "Conclusion", "Recommendation"
-#     ]
-
-#     # Формуємо список словників для JSON-відповіді
-#     data = [dict(zip(columns, row)) for row in rows]
-#     print(data)
-#     return data
-
-# @app.route('/api/get_report', methods=['GET'])
-# def get_report():
-#     """ API повертає JSON-список """
-#     data = get_db_data()
-
-#     if not data:
-#         # Повертаємо тестові дані, якщо в БД немає записів
-#         data = [
-#             {"Channel": "Вертолатте", "Content": "Тестовий пост 1", "Date": "2024-02-08", "Model": "ruBert"},
-#             {"Channel": "ДРОННИЦА", "Content": "Тестовий пост 2", "Date": "2024-02-07", "Model": "xgboost"},
-#             {"Channel": "Донбасс Россия", "Content": "Тестовий пост 3", "Date": "2024-02-06", "Model": "ruBert"}
-#         ]
-
-#     return jsonify(data)
-
-from flask import Flask, Response
-import sqlite3
-import csv
-import io
 
 
 def get_db_data():
-    """Отримання всіх даних із таблиці TelegramPostInfo"""
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM TelegramPostInfo")
     rows = cursor.fetchall()
 
-    # Отримуємо назви колонок динамічно
+
     column_names = [description[0] for description in cursor.description]
     conn.close()
 
@@ -304,18 +263,18 @@ def get_db_data():
 
 @app.route('/api/get_report', methods=['GET'])
 def download_csv():
-    """API повертає готовий CSV-файл"""
+
     column_names, data = get_db_data()
 
     if not data:
         return Response("Немає даних для експорту", status=204)
 
-    # Формуємо CSV-файл у пам'яті
+
     output = io.StringIO()
     csv_writer = csv.writer(output)
 
-    csv_writer.writerow(column_names)  # Записуємо заголовки
-    csv_writer.writerows(data)  # Записуємо рядки
+    csv_writer.writerow(column_names) 
+    csv_writer.writerows(data)  
 
     response = Response(output.getvalue(), content_type="text/csv")
     response.headers["Content-Disposition"] = "attachment; filename=report.csv"

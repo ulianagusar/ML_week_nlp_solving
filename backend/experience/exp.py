@@ -6,7 +6,7 @@ import numpy as np
 
 app = Flask(__name__)
 
-# Завантажуємо моделі один раз при старті сервера
+
 MODEL_NAME = "bodomerka/Milytary_exp_class_classification_sber_ai_based"
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
