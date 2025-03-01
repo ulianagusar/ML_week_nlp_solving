@@ -13,8 +13,10 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 bert_model = AutoModelForSequenceClassification.from_pretrained(MODEL_NAME).to(device)
 
+model_path = os.path.join(os.path.dirname(__file__), "xgb_model.json")
+
 xgb_model = xgb.Booster()
-xgb_model.load_model("xgb_model.json") 
+xgb_model.load_model(model_path)
 
 @app.route('/predict/bert', methods=['POST'])
 def predict_bert():
