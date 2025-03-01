@@ -55,6 +55,10 @@ from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, T5Tokenizer, T5Fo
 
 import openai
 import json
+import os
+from dotenv import load_dotenv
+load_dotenv()
+api_key = os.getenv("API_KEY")
 openai.api_key = api_key
 
 
