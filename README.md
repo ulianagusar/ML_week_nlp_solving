@@ -107,6 +107,29 @@ cd frontend
 npm install
 ```
 
+### **Запуск з докером**
+1. Перший варіант це білдити окремо кожен image
+   ```bash
+  docker build -t front -f ./frontend/Dockerfile ./frontend
+  ```
+  ```bash
+  docker build -t back1 -f backend/Dockerfile .
+  ```
+   ```bash
+  docker build -t back2 -f backend/experience/Dockerfile .
+  ```
+   ```bash
+  docker-compose up
+  ```
+2. Другий варіант це білдити весь докер композ (тобі необхідно першу частину файлу закоментувати і розкоментувати другу)
+   ```bash
+  docker-compose build
+  ```
+   ```bash
+  docker-compose up
+  ```
+
+
 ### **Налаштування змінних оточення**
 Створіть локально .env файл
 Гляньте у .env.example, які саме змінні оточення потрібно вказати у .env файлі
