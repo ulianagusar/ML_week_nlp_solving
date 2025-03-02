@@ -6,16 +6,20 @@ services:
       - "4200:4200"
     networks:
       - my_network
+    environment:
+      - BACKEND1_URL=http://backend1:5001
 
   backend1:
-    image: back1  
+    image: back  
     ports:
       - "5001:5001"
     networks:
       - my_network
+    environment:
+      - BACKEND2_URL=http://backend2:5003
 
   backend2:
-    image: back2 
+    image: back2
     ports:
       - "5003:5003"
     networks:
@@ -24,6 +28,8 @@ services:
 networks:
   my_network:
     driver: bridge
+
+
 
 # version: '3'
 # services:
