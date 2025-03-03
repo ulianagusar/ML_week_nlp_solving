@@ -63,17 +63,25 @@ def save_data(message_id, message_text, channel, date_time, name, location, weap
             (message_id, message_text, channel, date_time, name, location, weapon, observation, discussion, conclusion, recommendation)
         )
 
+        # Дізнаємося, скільки рядків було вставлено
+        inserted_rows = cursor.rowcount
         conn.commit()
         conn.close()
 
+        if inserted_rows > 0:
+            print(f"✅ Успішно вставлено {inserted_rows} записів")
+        else:
+            print("🚨 Помилка: дані не були додані!")
+
     except Exception as e:
-        print(f"Error saving to the database: {e}")
+        print(f"🚨 Помилка збереження в БД: {e}")
 
 
 
 def delete_old_posts():
 
     try:
+        print("deleteposts")
         conn = get_db_connection()
         cursor = conn.cursor()
 
@@ -154,17 +162,21 @@ def get_messages_sync(start_date, end_date, channel_name):
 
 @app.route('/api/fetch_posts', methods=['POST'])
 def fetch_posts():
+    print("here")
     data = request.json
     print(data)
     channel_name = data.get('channel')
     start_date_str = data.get('start_date')
     end_date_str = data.get('end_date')
     model = data.get('model')
+    
     try:
+        print("try")
         start_date = datetime.strptime(start_date_str, "%Y-%m-%d")
         end_date = datetime.strptime(end_date_str, "%Y-%m-%d")
 
         delete_old_posts()
+        print("after")
        # messages , dates , channels , ids  = get_tg_messages(app, start_date, end_date, channel_name)
         messages , dates , channels , ids = get_messages_sync(start_date, end_date, channel_name)
 
@@ -179,14 +191,14 @@ def fetch_posts():
         for i in range(len(messages)) :
                 cleaned_message = preprocessing(messages[i])
                 if model == "ruBert":
-                     api_bert = "http://127.0.0.1:5003/predict/bert"
+                     api_bert = "http://backend2:5003/predict/bert"
                      test_data = {"text": cleaned_message}
                      response = requests.post(api_bert, json=test_data)
                      exp_class = response.json().get("prediction")
                      print(exp_class)
                      #experience_bert1(cleaned_message)
                 else :
-                     api_xgboost = "http://127.0.0.1:5003/predict/xgboost"
+                     api_xgboost = "http://backend2:5003/predict/xgboost"
                      test_data = {"text": cleaned_message}
                      response = requests.post(api_xgboost, json=test_data)
                      exp_class = response.json().get("prediction")
@@ -202,10 +214,12 @@ def fetch_posts():
 
                     cleaned_messages.append(cleaned_message)
 
+        print("here77")
         manager = MessageManager()
 
         ids_unique = rm_dublicates(manager , cleaned_messages ,exp_only_date ,exp_only_id ) #rm_dublicates(manager , cleaned_messages)
         print(ids_unique)
+        print("here55")
         for i in range(len(exp_only_mes)) :
             if exp_only_id[i] in ids_unique :
                 o, d, c, r, t = generate_odcr_report(cleaned_messages[i])
@@ -216,7 +230,7 @@ def fetch_posts():
 
         return jsonify({"message": "Messages successfully received and saved"}), 200
     except Exception as e:
-        print(e)
+        app.logger.error(f"Error in endpoint: {str(e)}")
         return jsonify({"error": f"error fetch_posts: {e}"}), 500
 
 
@@ -224,6 +238,8 @@ def fetch_posts():
 
 @app.route('/api/posts', methods=['GET'])
 def get_posts():
+    print("geeet")
+    print("geeet")
 
     try:
         conn = get_db_connection()
@@ -284,8 +300,5 @@ def download_csv():
     return response
 
 
-
-
-
 if __name__ == '__main__':
-    app.run( debug = True , host='0.0.0.0', port=5001)
+    app.run( debug = False , host='0.0.0.0', port=5001)
