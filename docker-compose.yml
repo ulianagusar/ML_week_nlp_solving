@@ -1,13 +1,11 @@
 version: '3'
 services:
   frontend:
-    image: front  
+    image: front 
     ports:
       - "4200:4200"
     networks:
       - my_network
-    environment:
-      - BACKEND1_URL=http://backend1:5001
 
   backend1:
     image: back  
