@@ -58,7 +58,7 @@ import json
 import os
 from dotenv import load_dotenv
 load_dotenv()
-api_key = os.getenv("API_KEY")
+api_key = os.getenv("OPENAI_API_KEY")
 openai.api_key = api_key
 
 def generate_odcr_report(input_message):
