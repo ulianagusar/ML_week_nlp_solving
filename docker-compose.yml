@@ -1,58 +1,23 @@
-version: '3'
-services:
-  frontend:
-    image: front 
-    ports:
-      - "4200:4200"
-    networks:
-      - my_network
-
-  backend1:
-    image: back  
-    ports:
-      - "5001:5001"
-    networks:
-      - my_network
-    environment:
-      - BACKEND2_URL=http://backend2:5003
-
-  backend2:
-    image: back2
-    ports:
-      - "5003:5003"
-    networks:
-      - my_network
-
-networks:
-  my_network:
-    driver: bridge
-
-
-
 # version: '3'
 # services:
 #   frontend:
-#     build:
-#       context: ./frontend  
-#       dockerfile: Dockerfile  
+#     image: front 
 #     ports:
 #       - "4200:4200"
 #     networks:
 #       - my_network
 
 #   backend1:
-#     build:
-#       context: ./backend  
-#       dockerfile: Dockerfile 
+#     image: back  
 #     ports:
 #       - "5001:5001"
 #     networks:
 #       - my_network
+#     environment:
+#       - BACKEND2_URL=http://backend2:5003
 
 #   backend2:
-#     build:
-#       context: ./backend/experience  
-#       dockerfile: Dockerfile  
+#     image: back2
 #     ports:
 #       - "5003:5003"
 #     networks:
@@ -61,3 +26,40 @@ networks:
 # networks:
 #   my_network:
 #     driver: bridge
+
+
+
+version: '3'
+services:
+  frontend:
+    build:
+      context: ./frontend  
+      dockerfile: Dockerfile  
+    ports:
+      - "4200:4200"
+    networks:
+      - my_network
+
+  backend1:
+    build:
+      context: ./backend  
+      dockerfile: Dockerfile 
+    ports:
+      - "5001:5001"
+    networks:
+      - my_network
+    environment:
+      - BACKEND2_URL=http://backend2:5003
+
+  backend2:
+    build:
+      context: ./backend/experience  
+      dockerfile: Dockerfile  
+    ports:
+      - "5003:5003"
+    networks:
+      - my_network
+
+networks:
+  my_network:
+    driver: bridge
