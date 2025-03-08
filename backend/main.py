@@ -25,8 +25,15 @@ import csv
 import io
 os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
 
-API_ID = 28167910
-API_HASH = "7d7f7bb60be610415488ecd8bc8731e9"
+from dotenv import load_dotenv
+import os
+
+# Завантажуємо змінні з .env
+load_dotenv()
+
+# Отримуємо значення
+API_ID = os.getenv("API_ID")
+API_HASH = os.getenv("API_HASH")
 
 CHANNELS = ["@vertolatte", "@dronnitsa", "@donbassrussiazvo"]
 received_messages = []
