@@ -3,6 +3,7 @@ import torch
 import xgboost as xgb
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import numpy as np
+import os
 
 app = Flask(__name__)
 
@@ -20,6 +21,7 @@ xgb_model.load_model(model_path)
 
 @app.route('/predict/bert', methods=['POST'])
 def predict_bert():
+    print("here3")
     data = request.json
     text = data.get("text", "")
 
