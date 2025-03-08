@@ -122,7 +122,7 @@ npm install
 2. Другий варіант це білдити весь докер композ (тобі необхідно першу частину файлу закоментувати і розкоментувати другу)
   
   ```
-  docker-compose build
+  docker-compose up --build
   ```
   docker-compose up
 
