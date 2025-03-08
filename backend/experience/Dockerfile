@@ -1,13 +1,13 @@
-FROM python:3.10-slim
+FROM python:3.10.16-slim
 
-WORKDIR /app
+WORKDIR /app/backend/experience
 
-COPY requirements2.txt /app/
+COPY requirements.txt .
 
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY backend/ /app/
+COPY . .
 
 EXPOSE 5003
 
-CMD ["python", "experience/exp.py"]
+CMD ["python", "exp.py", "--host", "0.0.0.0"]
