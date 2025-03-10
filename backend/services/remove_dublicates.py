@@ -8,6 +8,8 @@ from sentence_transformers import SentenceTransformer
 from datetime import datetime, timedelta
 
 
+
+
 class MessageManager:
     def __init__(self, model_name='paraphrase-multilingual-MiniLM-L12-v2', index_path='faiss.index', data_path='data.pkl'):
         self.model = SentenceTransformer(model_name)
@@ -47,6 +49,48 @@ class MessageManager:
 
         return (nearest_message, nearest_timestamp), similar[0]
     
+    def is_similar_in_time_range(self, new_message, new_timestamp, day_range=1, threshold=0.8):
+        if len(self.messages) == 0:
+            print("база пуста - запис")
+            return False
+        
+        new_dt = datetime.strptime(new_timestamp, "%Y-%m-%d %H:%M:%S.%f")
+        start_dt = new_dt - timedelta(days=day_range)
+        
+        valid_indices = [
+            i for i, ts in enumerate(self.timestamps)
+            if start_dt <= datetime.strptime(ts, "%Y-%m-%d %H:%M:%S.%f") <= new_dt
+        ]
+
+        if not valid_indices:
+            print("подібних немає - запис")
+            return False 
+
+        filtered_embeddings = np.array([self.embeddings[i] for i in valid_indices])
+        new_embedding = self.model.encode([new_message]).astype('float32')
+        
+        new_embedding = new_embedding.squeeze() 
+        similarities = np.dot(filtered_embeddings, new_embedding) / (
+            np.linalg.norm(filtered_embeddings, axis=1) * np.linalg.norm(new_embedding)
+        )
+
+        if similarities.size == 0:
+            print("подібних немає - запис")
+            return False 
+
+        best_idx = np.argmax(similarities)
+        best_similarity = similarities[best_idx]
+
+        if best_similarity > threshold:
+                    print("подібні є  - не запис")
+                    return  True
+        else :
+                    print("подібних немає  - запис")
+                    return  False
+        #     nearest_index = valid_indices[best_idx]
+        #     return (self.messages[nearest_index], self.timestamps[nearest_index]), True
+
+
     def save_data(self):
         faiss.write_index(self.index, self.index_path)
         with open(self.data_path, 'wb') as f:
@@ -119,3 +163,20 @@ def rm_dublicates(manager , test_messages ,test_times ,test_ids ,day_range = 1):
                  
      manager.shutdown()
      return res_ids
+
+
+def rm_duplicates_time_range(manager, test_messages, test_times, test_ids, day_range=1):
+    res_ids = []
+
+    for new_msg, new_timestamp, new_id in zip(test_messages, test_times, test_ids):
+        print("для new_msg " + new_msg + " " + str(new_timestamp))
+        is_similar = manager.is_similar_in_time_range(new_msg, new_timestamp, day_range)
+        if is_similar == False :
+               manager.add_new_message(new_msg , new_timestamp)
+               res_ids.append(new_id)
+
+        else:
+             print(f"{new_msg}\nСхожий запис у межах часу знайдено. Не записую.")
+    
+    manager.shutdown()
+    return res_ids
