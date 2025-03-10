@@ -179,14 +179,14 @@ def fetch_posts():
         for i in range(len(messages)) :
                 cleaned_message = preprocessing(messages[i])
                 if model == "ruBert":
-                     api_bert = "http://localhost:5003/predict/bert"
+                     api_bert = "http://backend2:5003/predict/bert"
                      test_data = {"text": cleaned_message}
                      response = requests.post(api_bert, json=test_data)
                      exp_class = response.json().get("prediction")
                      print(exp_class)
                      #experience_bert1(cleaned_message)
                 else :
-                     api_xgboost = "http://localhost:5003/predict/xgboost"
+                     api_xgboost = "http://backend2:5003/predict/xgboost"
                      test_data = {"text": cleaned_message}
                      response = requests.post(api_xgboost, json=test_data)
                      exp_class = response.json().get("prediction")

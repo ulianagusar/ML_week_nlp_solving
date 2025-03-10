@@ -1,1 +1,3 @@
 .env
+backend/services/__pycache__/
+backend/services/odsr.py
