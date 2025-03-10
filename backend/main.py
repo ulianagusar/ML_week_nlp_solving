@@ -52,16 +52,17 @@ def get_db_connection():
 def save_data(message_id, message_text, channel, date_time, name, location, weapon, observation, discussion, conclusion, recommendation):
 
     try:
+        messagelink = "https://t.me/" + channel[1:] + "/" + str(message_id)
         conn = get_db_connection()
         cursor = conn.cursor()
 
         cursor.execute(
             """
             INSERT INTO TelegramPostInfo 
-            (MessageID, Message, Channel, MessageDate, Name, Location, Weapons, Observation, Discussion, Conclusion, Recommendation)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            (MessageID, Message, MessageLink, Channel, MessageDate, Name, Location, Weapons, Observation, Discussion, Conclusion, Recommendation)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
-            (message_id, message_text, channel, date_time, name, location, weapon, observation, discussion, conclusion, recommendation)
+            (message_id, message_text, messagelink, channel, date_time, name, location, weapon, observation, discussion, conclusion, recommendation)
         )
 
         # Дізнаємося, скільки рядків було вставлено
@@ -179,14 +180,14 @@ def fetch_posts():
         for i in range(len(messages)) :
                 cleaned_message = preprocessing(messages[i])
                 if model == "ruBert":
-                     api_bert = "http://backend2:5003/predict/bert"
+                     api_bert = "http://localhost:5003/predict/bert"
                      test_data = {"text": cleaned_message}
                      response = requests.post(api_bert, json=test_data)
                      exp_class = response.json().get("prediction")
                      print(exp_class)
                      #experience_bert1(cleaned_message)
                 else :
-                     api_xgboost = "http://backend2:5003/predict/xgboost"
+                     api_xgboost = "http://localhost:5003/predict/xgboost"
                      test_data = {"text": cleaned_message}
                      response = requests.post(api_xgboost, json=test_data)
                      exp_class = response.json().get("prediction")

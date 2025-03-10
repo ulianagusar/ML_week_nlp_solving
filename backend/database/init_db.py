@@ -12,6 +12,7 @@ def init_db():
         CREATE TABLE IF NOT EXISTS TelegramPostInfo (
             MessageID INTEGER PRIMARY KEY AUTOINCREMENT,
             Message TEXT NOT NULL,
+            MessageLink TEXT NOT NULL,
             Channel TEXT NOT NULL,
             MessageDate TEXT NOT NULL,
             Name TEXT,
