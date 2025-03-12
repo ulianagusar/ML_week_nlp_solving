@@ -117,7 +117,7 @@ export class AppComponent implements OnInit {
   }
 
   fetchPosts(): void {
-    this.http.get<any[]>('http://127.0.0.1:5001/api/posts')
+    this.http.get<any[]>('http://backend:5001/api/posts')
       .subscribe({
         next: (data) => {
           this.posts = data;
@@ -168,7 +168,7 @@ export class AppComponent implements OnInit {
 
     console.log('Відправка запиту:', requestBody);
     
-    this.http.post('http://127.0.0.1:5001/api/fetch_posts', requestBody)
+    this.http.post('http://backend:5001/api/fetch_posts', requestBody)
       .subscribe({
         next: () => this.fetchPosts(),
         error: (error) => console.error('Помилка при виконанні POST запиту:', error)
@@ -176,7 +176,7 @@ export class AppComponent implements OnInit {
   }
 
   onDownloadCSV(): void {
-    this.http.get('http://127.0.0.1:5001/api/get_report', { responseType: 'blob' })
+    this.http.get('http://backend:5001/api/get_report', { responseType: 'blob' })
       .subscribe({
         next: (blob) => {
           const url = window.URL.createObjectURL(blob);
@@ -195,7 +195,7 @@ export class AppComponent implements OnInit {
   }
   
   onClearDB(): void {
-    this.http.post('http://127.0.0.1:5001/api/clear_db', {})
+    this.http.post('http://backend:5001/api/clear_db', {})
       .subscribe({
         next: (response) => {
           console.log('База даних очищена:', response);
