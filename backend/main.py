@@ -74,7 +74,14 @@ def save_data(message_id, message_text, channel, date_time, name, location, weap
     except Exception as e:
         print(f"🚨 Помилка збереження в БД: {e}")
 
+<<<<<<< HEAD
 def delete_old_posts():
+=======
+
+@app.route('/api/clear_db', methods=['POST'])
+def clear_db():
+
+>>>>>>> @{-1}
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -83,7 +90,7 @@ def delete_old_posts():
         conn.close()
         print("Deleted all records from the TelegramPostInfo table.")
     except Exception as e:
-        print(f"Error deleting records from TelegramPostInfo:  {e}")
+        return jsonify({"error": f"Error deleting records from TelegramPostInfo: {e}"}), 500
     try:
         faiss_index_path = "faiss.index"
         data_pkl_path = "data.pkl"
@@ -94,7 +101,8 @@ def delete_old_posts():
             else:
                 print(f"Файл {file_path} не знайдено.")
     except Exception as e:
-        print(f"Error deleting faiss.index and data.pkl :  {e}")
+        return jsonify({"error": f"Error deleting faiss.index and data.pkl : {e}"}), 500
+    return jsonify({"message": "Database cleared successfully"}), 200
 
 async def fetch_messages(start_date, end_date, channel_name):
     if channel_name == "Вертолатте":
@@ -162,6 +170,7 @@ def fetch_posts():
             cleaned_message = preprocessing(messages[i])
             app.logger.info(f"Processing message {i}: {cleaned_message[:50]}...")  # Додано детальний дебаг
 
+<<<<<<< HEAD
             api_url = "http://backend2:5003/predict/bert" if model == "ruBert" else "http://backend2:5003/predict/xgboost"
             test_data = {"text": cleaned_message}
             try:
@@ -178,6 +187,31 @@ def fetch_posts():
             except ValueError as e:
                 app.logger.error(f"JSON decode error from {api_url}: {str(e)}, response: {response.text}")
                 return jsonify({"error": f"Invalid response from prediction API: {str(e)}"}), 500
+=======
+        for i in range(len(messages)) :
+                cleaned_message = preprocessing(messages[i])
+                if model == "ruBert":
+                     api_bert = "http://backend2:5003/predict/bert"
+                     test_data = {"text": cleaned_message}
+                     response = requests.post(api_bert, json=test_data)
+                     exp_class = response.json().get("prediction")
+                     print(exp_class)
+                     #experience_bert1(cleaned_message)
+                else :
+                     api_xgboost = "http://backend2:5003/predict/xgboost"
+                     test_data = {"text": cleaned_message}
+                     response = requests.post(api_xgboost, json=test_data)
+                     exp_class = response.json().get("prediction")
+                     print(exp_class)
+                    # exp_class = experience_xg_boost(cleaned_message)
+                    # exp_class =1
+              #  print(exp_class)
+                if exp_class == 1:
+                    exp_only_mes.append(messages[i])
+                    exp_only_date.append(dates[i])
+                    exp_only_id.append(ids[i])
+                    exp_only_channels.append(channels[i])
+>>>>>>> @{-1}
 
             if exp_class == 1:
                 exp_only_mes.append(messages[i])
@@ -276,4 +310,8 @@ def download_csv():
     return response
 
 if __name__ == '__main__':
+<<<<<<< HEAD
     app.run(debug=False, host='0.0.0.0', port=5001)
+=======
+    app.run( debug = False , host='0.0.0.0', port=5001)
+>>>>>>> @{-1}

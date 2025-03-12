@@ -1,8 +1,6 @@
 <main class="main">
     <div class="centered-container">
-        <!-- Контейнер для дропдауна та поля дати -->
         <div class="dropdown-date-container">
-            <!-- Дропдаун для вибору каналу -->
             <div class="dropdown">
                 <select (change)="onChannelChange($event)" class="channel-dropdown">
                   <option value="all">Усі канали</option>
@@ -25,7 +23,6 @@
                 <input type="date" id="end-date" (change)="onEndDateChange($event)">
             </div>
 
-            <!-- Кнопка пошуку -->
             <div class="search-button">
                 <button class="btn-search" (click)="onSearch()">Search</button>
             </div>
@@ -33,18 +30,18 @@
             <div class="search-button">
                 <button class="btn-search" (click)="onDownloadCSV()">ODCR</button>
             </div>
+
+            <div class="clear-db">
+                <button class="clear-db" (click)="onClearDB()">Clear DB</button>
+            </div>
         </div>
 
-        <!-- Велике вікно повідомлень -->
         <div class="popup">
             <div class="messages">
-                <!-- Перебір повідомлень -->
                 <div *ngFor="let post of filteredPosts" class="message">
                     <div class="message-content">
                         <p class="text">{{ post.Message }}</p>
-                        <!-- Додаємо поле з датою -->
                         <p class="date">{{ post.MessageDate | date }}</p>
-                        <!-- Використовуємо пайп для формату дати -->
                     </div>
                 </div>
             </div>

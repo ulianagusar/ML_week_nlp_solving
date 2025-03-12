@@ -193,7 +193,22 @@ export class AppComponent implements OnInit {
         }
       });
   }
+  
+  onClearDB(): void {
+    this.http.post('http://34.116.199.145:5001/api/clear_db', {})
+      .subscribe({
+        next: (response) => {
+          console.log('База даних очищена:', response);
+          alert('База даних очищена успішно!');
+        },
+        error: (error) => {
+          console.error('Помилка при очищенні БД:', error);
+          alert('Помилка очищення БД!');
+        }
+      });
+  }
 }
+<<<<<<< HEAD
 
 // // import { Component, OnInit } from '@angular/core';
 // // import { HttpClientModule } from '@angular/common/http';
@@ -392,3 +407,5 @@ export class AppComponent implements OnInit {
 //       });
 //   }
 // }
+=======
+>>>>>>> @{-1}

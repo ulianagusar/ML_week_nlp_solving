@@ -14,13 +14,34 @@
     background-color: green;
     color: white;
     font-size: 18px;
-    padding: 10px 20px;
+    padding: 10px 10px;
     border: none;
     border-radius: 5px;
     cursor: pointer;
 }
 
 .btn-search:hover {
+    background-color: darkgreen;
+}
+
+.clear-db {
+    background-color: green;
+    color: white;
+    font-size: 18px;
+    padding: 10px 10px;
+    /* Виправлено некоректний -2px */
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    height: 20px;
+    /* Центрування тексту */
+}
+
+.clear-db:hover {
     background-color: darkgreen;
 }
 
@@ -85,7 +106,7 @@
     margin-left: 100px;
     padding: 20px;
     height: 550px;
-    width: 1000px;
+    width: 1030px;
 }
 
 
@@ -112,7 +133,7 @@
 .channel-dropdown {
     padding: 10px;
     font-size: 16px;
-    width: 200px;
+    width: 180px;
     border-radius: 4px;
 }
 
