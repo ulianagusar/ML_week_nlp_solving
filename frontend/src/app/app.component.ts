@@ -193,7 +193,12 @@ export class AppComponent implements OnInit {
         }
       });
   }
+  
+  onClearDB() {
+
+  }
 }
+
 
 // // import { Component, OnInit } from '@angular/core';
 // // import { HttpClientModule } from '@angular/common/http';
