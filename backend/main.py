@@ -24,6 +24,11 @@ from flask import Flask, Response
 import sqlite3
 import csv
 import io
+from dotenv import load_dotenv
+import os
+load_dotenv()
+import openai
+openai.api_key = os.getenv("OPENAI_API_KEY")
 os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
 
 API_ID = 28167910
@@ -152,76 +157,79 @@ async def fetch_messages(start_date, end_date, channel_name):
 def get_messages_sync(start_date, end_date, channel_name):
 
     return asyncio.run(fetch_messages(start_date, end_date, channel_name))
-
 @app.route('/api/fetch_posts', methods=['POST'])
 def fetch_posts():
-    data = request.json
-    print(data)
-    channel_name = data.get('channel')
-    start_date_str = data.get('start_date')
-    end_date_str = data.get('end_date')
-    model = data.get('model')
-    
     try:
+        data = request.get_json()
+        app.logger.info(f"Received data: {data}")
+        channel_name = data.get('channel')
+        start_date_str = data.get('start_date')
+        end_date_str = data.get('end_date')
+        model = data.get('model')
+
+        if not all([channel_name, start_date_str, end_date_str, model]):
+            app.logger.error("Missing required fields")
+            return jsonify({"error": "Missing required fields"}), 400
+
         start_date = datetime.strptime(start_date_str, "%Y-%m-%d")
         end_date = datetime.strptime(end_date_str, "%Y-%m-%d")
+        app.logger.info(f"Parsed dates: start={start_date}, end={end_date}")
 
-       # delete_old_posts()
-        messages , dates , channels , ids = get_messages_sync(start_date, end_date, channel_name)
+        messages, dates, channels, ids = get_messages_sync(start_date, end_date, channel_name)
+        app.logger.info(f"Messages received: {len(messages)} items")
 
-        exp_only_mes = []
-        exp_only_date = []
-        exp_only_id = []
-        exp_only_channels = []
+        if not messages:
+            app.logger.warning(f"No messages found for channel '{channel_name}'")
+            return jsonify({"message": "No messages found"}), 200
 
+        exp_only_mes, exp_only_date, exp_only_id, exp_only_channels, cleaned_messages = [], [], [], [], []
 
-        cleaned_messages = []
+        for i in range(len(messages)):
+            cleaned_message = preprocessing(messages[i])
+            app.logger.debug(f"Cleaned message {i}: {cleaned_message}")
 
-        for i in range(len(messages)) :
-                cleaned_message = preprocessing(messages[i])
-                if model == "ruBert":
-                     api_bert = "http://localhost:5003/predict/bert"
-                     test_data = {"text": cleaned_message}
-                     response = requests.post(api_bert, json=test_data)
-                     exp_class = response.json().get("prediction")
-                     print(exp_class)
-                     #experience_bert1(cleaned_message)
-                else :
-                     api_xgboost = "http://localhost:5003/predict/xgboost"
-                     test_data = {"text": cleaned_message}
-                     response = requests.post(api_xgboost, json=test_data)
-                     exp_class = response.json().get("prediction")
-                     print(exp_class)
-                    # exp_class = experience_xg_boost(cleaned_message)
-                    # exp_class =1
-              #  print(exp_class)
-                if exp_class == 1:
-                    exp_only_mes.append(messages[i])
-                    exp_only_date.append(dates[i])
-                    exp_only_id.append(ids[i])
-                    exp_only_channels.append(channels[i])
+            api_url = "http://backend2:5003/predict/bert" if model == "ruBert" else "http://backend2:5003/predict/xgboost"
+            test_data = {"text": cleaned_message}
+            try:
+                response = requests.post(api_url, json=test_data, timeout=10)
+                response.raise_for_status()
+                if not response.text:
+                    app.logger.error(f"Empty response from {api_url}")
+                    return jsonify({"error": f"Empty response from {api_url}"}), 500
+                exp_class = response.json().get("prediction")
+                app.logger.info(f"Prediction for message {i} ({model}): {exp_class}")
+            except requests.exceptions.RequestException as e:
+                app.logger.error(f"Error calling {api_url}: {str(e)}")
+                return jsonify({"error": f"Prediction API error: {str(e)}"}), 500
+            except ValueError as e:
+                app.logger.error(f"JSON decode error from {api_url}: {str(e)}, response: {response.text}")
+                return jsonify({"error": f"Invalid response from prediction API: {str(e)}"}), 500
 
-                    cleaned_messages.append(cleaned_message)
+            if exp_class == 1:
+                exp_only_mes.append(messages[i])
+                exp_only_date.append(dates[i])
+                exp_only_id.append(ids[i])
+                exp_only_channels.append(channels[i])
+                cleaned_messages.append(cleaned_message)
 
         manager = MessageManager()
+        ids_unique = rm_duplicates_time_range(manager, cleaned_messages, exp_only_date, exp_only_id)
+        app.logger.info(f"Unique IDs: {ids_unique}")
 
-        ids_unique = rm_duplicates_time_range(manager , cleaned_messages ,exp_only_date ,exp_only_id ) #rm_dublicates(manager , cleaned_messages)
-        print(ids_unique)
-        for i in range(len(exp_only_mes)) :
-            if exp_only_id[i] in ids_unique :
-                o, d, c, r, t = generate_odcr_report(cleaned_messages[i])
-                save_data(exp_only_id[i], cleaned_messages[i], exp_only_channels[i], exp_only_date[i], get_name(cleaned_messages[i]), get_location(cleaned_messages[i]),
-                            get_weapons(cleaned_messages[i]) , o, d, c, r)
-
-
+        for i in range(len(exp_only_mes)):
+            if exp_only_id[i] in ids_unique:
+                try:
+                    o, d, c, r, t = generate_odcr_report(cleaned_messages[i])
+                    save_data(exp_only_id[i], cleaned_messages[i], exp_only_channels[i], exp_only_date[i], get_name(cleaned_messages[i]), get_weapons(cleaned_messages[i]), o, d, c, r)
+                    app.logger.info(f"Saved data for ID: {exp_only_id[i]}")
+                except Exception as e:
+                    app.logger.error(f"Error saving data for ID {exp_only_id[i]}: {str(e)}")
 
         return jsonify({"message": "Messages successfully received and saved"}), 200
+
     except Exception as e:
         app.logger.error(f"Error in endpoint: {str(e)}")
-        return jsonify({"error": f"error fetch_posts: {e}"}), 500
-
-
-
+        return jsonify({"error": f"error fetch_posts: {str(e)}"}), 500
 
 @app.route('/api/posts', methods=['GET'])
 def get_posts():
