@@ -79,8 +79,8 @@ def save_data(message_id, message_text, channel, date_time, name, location, weap
         print(f"🚨 Помилка збереження в БД: {e}")
 
 
-
-def delete_old_posts():
+@app.route('/api/clear_db', methods=['POST'])
+def clear_db():
 
     try:
         conn = get_db_connection()
@@ -93,7 +93,7 @@ def delete_old_posts():
 
         print("Deleted all records from the TelegramPostInfo table.")
     except Exception as e:
-        print(f"Error deleting records from TelegramPostInfo:  {e}")
+        return jsonify({"error": f"Error deleting records from TelegramPostInfo: {e}"}), 500
     try:
             faiss_index_path = "faiss.index"
             data_pkl_path = "data.pkl"
@@ -106,7 +106,8 @@ def delete_old_posts():
                 else:
                     print(f"Файл {file_path} не знайдено.")
     except Exception as e:
-        print(f"Error deleting faiss.index and data.pkl :  {e}")
+        return jsonify({"error": f"Error deleting faiss.index and data.pkl : {e}"}), 500
+    return jsonify({"message": "Database cleared successfully"}), 200
 
 
 
@@ -180,14 +181,14 @@ def fetch_posts():
         for i in range(len(messages)) :
                 cleaned_message = preprocessing(messages[i])
                 if model == "ruBert":
-                     api_bert = "http://localhost:5003/predict/bert"
+                     api_bert = "http://backend2:5003/predict/bert"
                      test_data = {"text": cleaned_message}
                      response = requests.post(api_bert, json=test_data)
                      exp_class = response.json().get("prediction")
                      print(exp_class)
                      #experience_bert1(cleaned_message)
                 else :
-                     api_xgboost = "http://localhost:5003/predict/xgboost"
+                     api_xgboost = "http://backend2:5003/predict/xgboost"
                      test_data = {"text": cleaned_message}
                      response = requests.post(api_xgboost, json=test_data)
                      exp_class = response.json().get("prediction")
