@@ -25,7 +25,7 @@ def predict_bert():
     data = request.json
     text = data.get("text", "")
 
-    inputs = tokenizer(text, return_tensors="pt", truncation=True, padding=True).to(device)
+    inputs = tokenizer(text, return_tensors="pt", truncation=True, max_length=512, padding=True).to(device)
     with torch.no_grad():
         outputs = bert_model(**inputs)
         prediction = torch.argmax(outputs.logits).item()
@@ -37,7 +37,7 @@ def predict_xgboost():
     data = request.json
     text = data.get("text", "")
 
-    inputs = tokenizer(text, return_tensors="pt", truncation=True, padding=True).to(device)
+    inputs = tokenizer(text, return_tensors="pt", truncation=True, max_length=512, padding=True).to(device)
     with torch.no_grad():
         outputs = bert_model(**inputs, output_hidden_states=True)
         embeddings = outputs.hidden_states[-1].mean(dim=1).cpu().numpy()
