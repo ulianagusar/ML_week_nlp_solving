@@ -37,14 +37,32 @@
         </div>
 
         <div class="popup">
-            <div class="messages">
-                <div *ngFor="let post of filteredPosts" class="message">
-                    <div class="message-content">
-                        <p class="text">{{ post.Message }}</p>
-                        <p class="date">{{ post.MessageDate | date }}</p>
-                    </div>
+              <div class="messages" *ngIf="showMessages">
+                  <div *ngFor="let post of filteredPosts" class="message">
+                      <div class="message-content">
+                          <p class="text">{{ post.Message }}</p>
+                          <p class="date">{{ post.MessageDate | date }}</p>
+                      </div>
+                  </div>
+              </div>
+
+              <div class="messages" *ngIf="!showMessages">
+                <div *ngFor="let odsr of odsrs.slice().reverse()" class="message">
+                  <div class="message-content">
+                    <p class="text"><b>Observation:</b> {{ odsr.Observation }}</p>
+                    <p class="text"><b>Discussion:</b> {{ odsr.Discussion }}</p>
+                    <p class="text"><b>Conclusion:</b> {{ odsr.Conclusion }}</p>
+                    <p class="text"><b>Recommendation:</b> {{ odsr.Recommendation }}</p>
+                    <p class="date">{{ odsr.MessageDate | date }}</p>
+                  </div>
                 </div>
-            </div>
-        </div>
-    </div>
+              </div>
+          </div>
+
+          <div class="toggle-view">
+              <button class="btn-toggle" (click)="toggleView()">
+                  {{ showMessages ? 'Show ODSR' : 'Show Messages' }}
+              </button>
+          </div>
+      </div>
 </main>
