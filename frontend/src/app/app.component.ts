@@ -102,6 +102,7 @@ import { CommonModule } from '@angular/common';
 export class AppComponent implements OnInit {
   title = 'my-angular-project';
   posts: any[] = [];
+  odsrs: any[] = [];
   filteredPosts: any[] = [];
   channels: string[] = ['Вертолатте', 'ДРОННИЦА', 'Донбасс Россия'];
   models: string[] = ['ruBert', 'xgboost'];
@@ -109,11 +110,13 @@ export class AppComponent implements OnInit {
   selectedModel: string = 'all';
   selectedStartDate: string | undefined;
   selectedEndDate: string | undefined;
+  showMessages: boolean = true;
 
   constructor(private http: HttpClient) {}
 
   ngOnInit(): void {
     this.fetchPosts();
+    this.fetchODSR();
   }
 
   fetchPosts(): void {
@@ -125,6 +128,18 @@ export class AppComponent implements OnInit {
         },
         error: (error) => {
           console.error('Помилка при отриманні постів:', error);
+        }
+      });
+  }
+
+  fetchODSR(): void {
+    this.http.get<any[]>('http://backend:5001/api/odsr')
+      .subscribe({
+        next: (data) => {
+          this.odsrs = data;
+        },
+        error: (error) => {
+          console.error('Помилка при отриманні ODSR звітів:', error);
         }
       });
   }
@@ -206,6 +221,10 @@ export class AppComponent implements OnInit {
           alert('Помилка очищення БД!');
         }
       });
+  }
+
+  toggleView(): void {
+    this.showMessages = !this.showMessages;
   }
 }
 

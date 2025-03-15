@@ -252,8 +252,36 @@ def get_posts():
         print(f"Error receiving messages {e}")
         return jsonify({"error": f"Error when receiving messages: {e}"}), 500
 
+@app.route('/api/odsr', methods=['GET'])
+def get_odsr_data():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        query = ("SELECT MessageID, MessageDate,"
+                 " Observation, Discussion, Conclusion, Recommendation "
+                 "FROM TelegramPostInfo "
+                 "WHERE LENGTH(COALESCE(Observation, '')) > 0 "
+                 "ORDER BY MessageDate "
+                 "LIMIT 100")
+        cursor.execute(query)
+        rows = cursor.fetchall()
+        conn.close()
 
+        odsrs = [
+            {
+                "TelegramPostInfoID": row["MessageID"],
+                "MessageDate": row["MessageDate"],
+                "Observation": row["Observation"],
+                "Discussion": row["Discussion"],
+                "Conclusion": row["Conclusion"],
+                "Recommendation": row["Recommendation"],
+            }
+            for row in rows
+        ]
 
+        return jsonify(odsrs), 200
+    except Exception as e:
+        return jsonify({"error": f"Error when receiving ODSR messages: {e}"}), 500
 
 def get_db_data():
     conn = get_db_connection()
