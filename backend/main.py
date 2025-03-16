@@ -29,7 +29,7 @@ os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
 API_ID = 28167910
 API_HASH = "7d7f7bb60be610415488ecd8bc8731e9"
 
-CHANNELS = ["@vertolatte", "@dronnitsa", "@donbassrussiazvo"]
+CHANNELS = ["@vertolatte", "@dronnitsa", "@donbassrussiazvo", "@victorydrones"]
 received_messages = []
 
 
@@ -116,6 +116,8 @@ async def fetch_messages(start_date, end_date, channel_name):
         channel = "@vertolatte"
     elif channel_name == "ДРОННИЦА":
         channel = "@dronnitsa"
+    elif channel_name == "VictoryDrones":
+        channel = "@victorydrones"
     else:
         channel = "@donbassrussiazvo"
 

@@ -104,7 +104,7 @@ export class AppComponent implements OnInit {
   posts: any[] = [];
   odsrs: any[] = [];
   filteredPosts: any[] = [];
-  channels: string[] = ['Вертолатте', 'ДРОННИЦА', 'Донбасс Россия'];
+  channels: string[] = ['Вертолатте', 'ДРОННИЦА', 'Донбасс Россия', 'VictoryDrones'];
   models: string[] = ['ruBert', 'xgboost'];
   selectedChannel: string = 'all';
   selectedModel: string = 'all';
