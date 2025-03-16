@@ -109,22 +109,26 @@ npm install
 
 ### **Запуск з докером**
 1. Перший варіант це білдити окремо кожен image
-   ```
+  ```
   docker build -t front -f ./frontend/Dockerfile ./frontend
   ```
+ ```
   docker build -t back1 -f backend/Dockerfile .
   ```
    ```bash
   docker build -t back2 -f backend/experience/Dockerfile .
   ```
+ ```
   docker-compose up
-
+ ```
 2. Другий варіант це білдити весь докер композ (тобі необхідно першу частину файлу закоментувати і розкоментувати другу)
   
   ```
   docker-compose up --build
   ```
+ ```
   docker-compose up
+   ```
 
 
 ### **Налаштування змінних оточення**
