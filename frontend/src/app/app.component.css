@@ -45,6 +45,19 @@
     background-color: darkgreen;
 }
 
+.btn-toggle {
+    background-color: green;
+    color: white;
+    font-size: 18px;
+    padding: 10px 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.btn-toggle:hover {
+    background-color: darkgreen;
+}
 
 /* Контейнер для дропдауна та поля дати */
 
