@@ -2,8 +2,8 @@
 # backend2 замість localhost для ендпоінтів у докері
 import xgboost as xgb
 from pyrogram import Client
-from datetime import datetime
-from flask import Flask, jsonify, request , Response
+from datetime import datetime, timedelta
+from flask import Flask, jsonify, request, Response
 from flask_cors import CORS
 import asyncio
 import pandas as pd
@@ -15,6 +15,7 @@ import pandas as pd
 from services.remove_dublicates import MessageManager , rm_dublicates , rm_duplicates_time_range
 import sqlite3
 import pandas as pd
+from apscheduler.schedulers.background import BackgroundScheduler
 from services.preproc import preprocessing
 from services.odsr import generate_odcr_report
 from services.ner import get_name , get_location , get_weapons 
@@ -29,7 +30,10 @@ os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
 API_ID = 28167910
 API_HASH = "7d7f7bb60be610415488ecd8bc8731e9"
 
+CHANNELS_FRONTEND = ["Вертолатте", "ДРОННИЦА", "Донбасс Россия", "VictoryDrones"]
 CHANNELS = ["@vertolatte", "@dronnitsa", "@donbassrussiazvo", "@victorydrones"]
+CHANNELS_MAP = dict(zip(CHANNELS_FRONTEND, CHANNELS))
+
 received_messages = []
 
 
@@ -37,6 +41,7 @@ received_messages = []
 app = Flask(__name__)
 CORS(app)
 
+scheduler = BackgroundScheduler()
 
 DB_PATH = Path(__file__).resolve().parent / "database" / "database.db"
 print(DB_PATH)
@@ -112,14 +117,12 @@ def clear_db():
 
 
 async def fetch_messages(start_date, end_date, channel_name):
-    if channel_name == "Вертолатте":
-        channel = "@vertolatte"
-    elif channel_name == "ДРОННИЦА":
-        channel = "@dronnitsa"
-    elif channel_name == "VictoryDrones":
-        channel = "@victorydrones"
+    channels_fetch = []
+
+    if channel_name in CHANNELS_MAP:
+        channels_fetch.append(CHANNELS_MAP[channel_name])
     else:
-        channel = "@donbassrussiazvo"
+        channels_fetch = CHANNELS
 
     # start_date = datetime.strptime(start_date, "%Y-%m-%d")
     # end_date = datetime.strptime(end_date, "%Y-%m-%d")
@@ -129,21 +132,22 @@ async def fetch_messages(start_date, end_date, channel_name):
 
     async with Client("military_bot", API_ID, API_HASH) as app:
         try:
-            chat = await app.get_chat(channel)
+            for channel in channels_fetch:
+                chat = await app.get_chat(channel)
 
-            async for message in app.get_chat_history(chat.id):
-                
-                if not message.date or message.date < start_date:
-                    break
-                
-                if start_date <= message.date <= end_date:
-                    message_text = message.text if message.text else message.caption
-                    if message_text:
-                        messages.append(message_text)
-                        print(message_text)
-                        dates.append(message.date.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3])
-                        channels.append(channel)
-                        ids.append(message.id)
+                async for message in app.get_chat_history(chat.id):
+
+                    if not message.date or message.date < start_date:
+                        break
+
+                    if start_date <= message.date <= end_date:
+                        message_text = message.text if message.text else message.caption
+                        if message_text:
+                            messages.append(message_text)
+                            print(message_text)
+                            dates.append(message.date.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3])
+                            channels.append(channel)
+                            ids.append(message.id)
 
         except Exception as e:
             print(f"Error receiving messages:  {e}")
@@ -156,68 +160,71 @@ def get_messages_sync(start_date, end_date, channel_name):
 
     return asyncio.run(fetch_messages(start_date, end_date, channel_name))
 
-@app.route('/api/fetch_posts', methods=['POST'])
-def fetch_posts():
-    data = request.json
-    print(data)
+
+def process_and_save_posts(data):
     channel_name = data.get('channel')
     start_date_str = data.get('start_date')
     end_date_str = data.get('end_date')
     model = data.get('model')
-    
+
+    start_date = datetime.strptime(start_date_str, "%Y-%m-%d")
+    end_date = datetime.strptime(end_date_str, "%Y-%m-%d")
+
+    # delete_old_posts()
+    messages, dates, channels, ids = get_messages_sync(start_date, end_date, channel_name)
+
+    exp_only_mes = []
+    exp_only_date = []
+    exp_only_id = []
+    exp_only_channels = []
+
+    cleaned_messages = []
+
+    for i in range(len(messages)):
+        cleaned_message = preprocessing(messages[i])
+        if model == "ruBert":
+            api_bert = "http://localhost:5003/predict/bert"
+            test_data = {"text": cleaned_message}
+            response = requests.post(api_bert, json=test_data)
+            exp_class = response.json().get("prediction")
+            print(exp_class)
+            # experience_bert1(cleaned_message)
+        else:
+            api_xgboost = "http://localhost:5003/predict/xgboost"
+            test_data = {"text": cleaned_message}
+            response = requests.post(api_xgboost, json=test_data)
+            exp_class = response.json().get("prediction")
+            print(exp_class)
+        # exp_class = experience_xg_boost(cleaned_message)
+        # exp_class =1
+        #  print(exp_class)
+        if exp_class == 1:
+            exp_only_mes.append(messages[i])
+            exp_only_date.append(dates[i])
+            exp_only_id.append(ids[i])
+            exp_only_channels.append(channels[i])
+
+            cleaned_messages.append(cleaned_message)
+
+    manager = MessageManager()
+
+    ids_unique = rm_duplicates_time_range(manager, cleaned_messages, exp_only_date,
+                                          exp_only_id)  # rm_dublicates(manager , cleaned_messages)
+    print(ids_unique)
+    for i in range(len(exp_only_mes)):
+        if exp_only_id[i] in ids_unique:
+            o, d, c, r, t = generate_odcr_report(cleaned_messages[i])
+            save_data(exp_only_id[i], cleaned_messages[i], exp_only_channels[i], exp_only_date[i],
+                      get_name(cleaned_messages[i]), get_location(cleaned_messages[i]),
+                      get_weapons(cleaned_messages[i]), o, d, c, r)
+
+
+@app.route('/api/fetch_posts', methods=['POST'])
+def fetch_posts():
+    data = request.json
+    print(data)
     try:
-        start_date = datetime.strptime(start_date_str, "%Y-%m-%d")
-        end_date = datetime.strptime(end_date_str, "%Y-%m-%d")
-
-       # delete_old_posts()
-        messages , dates , channels , ids = get_messages_sync(start_date, end_date, channel_name)
-
-        exp_only_mes = []
-        exp_only_date = []
-        exp_only_id = []
-        exp_only_channels = []
-
-
-        cleaned_messages = []
-
-        for i in range(len(messages)) :
-                cleaned_message = preprocessing(messages[i])
-                if model == "ruBert":
-                     api_bert = "http://backend2:5003/predict/bert"
-                     test_data = {"text": cleaned_message}
-                     response = requests.post(api_bert, json=test_data)
-                     exp_class = response.json().get("prediction")
-                     print(exp_class)
-                     #experience_bert1(cleaned_message)
-                else :
-                     api_xgboost = "http://backend2:5003/predict/xgboost"
-                     test_data = {"text": cleaned_message}
-                     response = requests.post(api_xgboost, json=test_data)
-                     exp_class = response.json().get("prediction")
-                     print(exp_class)
-                    # exp_class = experience_xg_boost(cleaned_message)
-                    # exp_class =1
-              #  print(exp_class)
-                if exp_class == 1:
-                    exp_only_mes.append(messages[i])
-                    exp_only_date.append(dates[i])
-                    exp_only_id.append(ids[i])
-                    exp_only_channels.append(channels[i])
-
-                    cleaned_messages.append(cleaned_message)
-
-        manager = MessageManager()
-
-        ids_unique = rm_duplicates_time_range(manager , cleaned_messages ,exp_only_date ,exp_only_id ) #rm_dublicates(manager , cleaned_messages)
-        print(ids_unique)
-        for i in range(len(exp_only_mes)) :
-            if exp_only_id[i] in ids_unique :
-                o, d, c, r, t = generate_odcr_report(cleaned_messages[i])
-                save_data(exp_only_id[i], cleaned_messages[i], exp_only_channels[i], exp_only_date[i], get_name(cleaned_messages[i]), get_location(cleaned_messages[i]),
-                            get_weapons(cleaned_messages[i]) , o, d, c, r)
-
-
-
+        process_and_save_posts(data)
         return jsonify({"message": "Messages successfully received and saved"}), 200
     except Exception as e:
         app.logger.error(f"Error in endpoint: {str(e)}")
@@ -317,8 +324,22 @@ def download_csv():
     return response
 
 
+def schedule_post_fetch():
+    try:
+        process_and_save_posts(data={
+            "channel": "",
+            "start_date": (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d"),
+            "end_date": datetime.now().strftime("%Y-%m-%d"),
+            "model": "ruBert"
+        })
+    except Exception as e:
+        print(f"Error in schedule message fetch: {e}")
 
 
+scheduler.add_job(schedule_post_fetch, 'cron', hour=0, minute=0)
+scheduler.start()
+
+print(datetime.now())
 
 if __name__ == '__main__':
     app.run( debug = False , host='0.0.0.0', port=5001)

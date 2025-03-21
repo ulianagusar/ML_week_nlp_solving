@@ -17,3 +17,4 @@ spacy-loggers==1.0.5
 TgCrypto==1.2.5
 Pyrogram==2.0.106
 aiohttp==3.11.12
+APScheduler==3.11.0
