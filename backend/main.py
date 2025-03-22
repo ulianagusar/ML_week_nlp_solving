@@ -1,4 +1,4 @@
-#pip install TgCrypto
+# pip install TgCrypto
 # backend2 замість localhost для ендпоінтів у докері
 import xgboost as xgb
 from pyrogram import Client
@@ -12,19 +12,20 @@ import numpy as np
 import os
 from transformers import pipeline
 import pandas as pd
-from services.remove_dublicates import MessageManager , rm_dublicates , rm_duplicates_time_range
+from services.remove_dublicates import MessageManager, rm_dublicates, rm_duplicates_time_range
 import sqlite3
 import pandas as pd
 from apscheduler.schedulers.background import BackgroundScheduler
 from services.preproc import preprocessing
 from services.odsr import generate_odcr_report
-from services.ner import get_name , get_location , get_weapons 
+from services.ner import get_name, get_location, get_weapons
 import requests
 from pathlib import Path
 from flask import Flask, Response
 import sqlite3
 import csv
 import io
+
 os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
 
 API_ID = 28167910
@@ -36,8 +37,6 @@ CHANNELS_MAP = dict(zip(CHANNELS_FRONTEND, CHANNELS))
 
 received_messages = []
 
-
-
 app = Flask(__name__)
 CORS(app)
 
@@ -46,16 +45,15 @@ scheduler = BackgroundScheduler()
 DB_PATH = Path(__file__).resolve().parent / "database" / "database.db"
 print(DB_PATH)
 
-def get_db_connection():
 
-    conn = sqlite3.connect(DB_PATH)  
-    conn.row_factory = sqlite3.Row 
+def get_db_connection():
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
     return conn
 
 
-
-def save_data(message_id, message_text, channel, date_time, name, location, weapon, observation, discussion, conclusion, recommendation):
-
+def save_data(message_id, message_text, channel, date_time, name, location, weapon, observation, discussion, conclusion,
+              recommendation):
     try:
         messagelink = "https://t.me/" + channel[1:] + "/" + str(message_id)
         conn = get_db_connection()
@@ -67,7 +65,8 @@ def save_data(message_id, message_text, channel, date_time, name, location, weap
             (MessageID, Message, MessageLink, Channel, MessageDate, Name, Location, Weapons, Observation, Discussion, Conclusion, Recommendation)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
-            (message_id, message_text, messagelink, channel, date_time, name, location, weapon, observation, discussion, conclusion, recommendation)
+            (message_id, message_text, messagelink, channel, date_time, name, location, weapon, observation, discussion,
+             conclusion, recommendation)
         )
 
         # Дізнаємося, скільки рядків було вставлено
@@ -86,7 +85,6 @@ def save_data(message_id, message_text, channel, date_time, name, location, weap
 
 @app.route('/api/clear_db', methods=['POST'])
 def clear_db():
-
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -100,20 +98,19 @@ def clear_db():
     except Exception as e:
         return jsonify({"error": f"Error deleting records from TelegramPostInfo: {e}"}), 500
     try:
-            faiss_index_path = "faiss.index"
-            data_pkl_path = "data.pkl"
+        faiss_index_path = "faiss.index"
+        data_pkl_path = "data.pkl"
 
-            # Видаляємо файли, якщо вони існують
-            for file_path in [faiss_index_path, data_pkl_path]:
-                if os.path.exists(file_path):
-                    os.remove(file_path)
-                    print(f"Файл {file_path} видалено.")
-                else:
-                    print(f"Файл {file_path} не знайдено.")
+        # Видаляємо файли, якщо вони існують
+        for file_path in [faiss_index_path, data_pkl_path]:
+            if os.path.exists(file_path):
+                os.remove(file_path)
+                print(f"Файл {file_path} видалено.")
+            else:
+                print(f"Файл {file_path} не знайдено.")
     except Exception as e:
         return jsonify({"error": f"Error deleting faiss.index and data.pkl : {e}"}), 500
     return jsonify({"message": "Database cleared successfully"}), 200
-
 
 
 async def fetch_messages(start_date, end_date, channel_name):
@@ -126,9 +123,8 @@ async def fetch_messages(start_date, end_date, channel_name):
 
     # start_date = datetime.strptime(start_date, "%Y-%m-%d")
     # end_date = datetime.strptime(end_date, "%Y-%m-%d")
-    
+
     messages, dates, channels, ids = [], [], [], []
-    
 
     async with Client("military_bot", API_ID, API_HASH) as app:
         try:
@@ -152,12 +148,11 @@ async def fetch_messages(start_date, end_date, channel_name):
         except Exception as e:
             print(f"Error receiving messages:  {e}")
         finally:
-            await app.stop() 
+            await app.stop()
     return messages, dates, channels, ids
 
 
 def get_messages_sync(start_date, end_date, channel_name):
-
     return asyncio.run(fetch_messages(start_date, end_date, channel_name))
 
 
@@ -183,14 +178,14 @@ def process_and_save_posts(data):
     for i in range(len(messages)):
         cleaned_message = preprocessing(messages[i])
         if model == "ruBert":
-            api_bert = "http://localhost:5003/predict/bert"
+            api_bert = "http://backend2:5003/predict/bert"
             test_data = {"text": cleaned_message}
             response = requests.post(api_bert, json=test_data)
             exp_class = response.json().get("prediction")
             print(exp_class)
             # experience_bert1(cleaned_message)
         else:
-            api_xgboost = "http://localhost:5003/predict/xgboost"
+            api_xgboost = "http://backend2:5003/predict/xgboost"
             test_data = {"text": cleaned_message}
             response = requests.post(api_xgboost, json=test_data)
             exp_class = response.json().get("prediction")
@@ -231,12 +226,8 @@ def fetch_posts():
         return jsonify({"error": f"error fetch_posts: {e}"}), 500
 
 
-
-
 @app.route('/api/posts', methods=['GET'])
 def get_posts():
-
-
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -245,10 +236,9 @@ def get_posts():
         rows = cursor.fetchall()
         conn.close()
 
-
         posts = [
             {
-                "TelegramPostInfoID": row["MessageID"],  
+                "TelegramPostInfoID": row["MessageID"],
                 "Message": row["Message"],
                 "Channel": row["Channel"],
                 "MessageDate": row["MessageDate"]
@@ -260,6 +250,7 @@ def get_posts():
     except Exception as e:
         print(f"Error receiving messages {e}")
         return jsonify({"error": f"Error when receiving messages: {e}"}), 500
+
 
 @app.route('/api/odsr', methods=['GET'])
 def get_odsr_data():
@@ -292,32 +283,31 @@ def get_odsr_data():
     except Exception as e:
         return jsonify({"error": f"Error when receiving ODSR messages: {e}"}), 500
 
+
 def get_db_data():
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM TelegramPostInfo")
     rows = cursor.fetchall()
 
-
     column_names = [description[0] for description in cursor.description]
     conn.close()
 
     return column_names, rows
 
+
 @app.route('/api/get_report', methods=['GET'])
 def download_csv():
-
     column_names, data = get_db_data()
 
     if not data:
         return Response("Немає даних для експорту", status=204)
 
-
     output = io.StringIO()
     csv_writer = csv.writer(output)
 
-    csv_writer.writerow(column_names) 
-    csv_writer.writerows(data)  
+    csv_writer.writerow(column_names)
+    csv_writer.writerows(data)
 
     response = Response(output.getvalue(), content_type="text/csv")
     response.headers["Content-Disposition"] = "attachment; filename=report.csv"
@@ -342,5 +332,4 @@ scheduler.start()
 print(datetime.now())
 
 if __name__ == '__main__':
-    app.run( debug = False , host='0.0.0.0', port=5001)
-
+    app.run(debug=False, host='0.0.0.0', port=5001)
