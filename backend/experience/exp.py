@@ -25,7 +25,7 @@ def predict_bert():
     data = request.json
     text = data.get("text", "")
 
-    inputs = tokenizer(text, return_tensors="pt", truncation=True, padding=True).to(device)
+    inputs = tokenizer(text, max_length=512, return_tensors="pt", truncation=True, padding=True).to(device)
     with torch.no_grad():
         outputs = bert_model(**inputs)
         prediction = torch.argmax(outputs.logits).item()
